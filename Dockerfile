@@ -1,17 +1,11 @@
 # 构建阶段
-FROM golang:1.23.4-alpine AS builder
+FROM golang:1.21-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
-# 设置Alpine Linux的镜像源为中国的镜像
-#RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
 
-# 安装依赖和git（用于直接从源站下载）
-RUN apk add --no-cache gcc musl-dev git
-
-# 设置为直接下载，不使用代理
-ENV GOPROXY=https://goproxy.cn,direct
-ENV GO111MODULE=on
+# 安装依赖
+RUN apk add --no-cache gcc musl-dev
 
 # 复制 go.mod 和 go.sum
 COPY go.mod go.sum ./
@@ -23,13 +17,13 @@ RUN go mod download
 COPY . .
 
 # 构建应用
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o main ./pkg/main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -a -o main ./cmd/main.go
 
 # 运行阶段
 FROM alpine:latest
 
 # 安装必要的运行时依赖
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata
 
 # 设置时区
 ENV TZ=Asia/Shanghai
@@ -38,9 +32,11 @@ WORKDIR /app
 
 # 从构建阶段复制二进制文件
 COPY --from=builder /app/main .
+COPY --from=builder /app/configs ./configs
+COPY --from=builder /app/scripts ./scripts
 
 # 暴露端口
 EXPOSE 8080
 
-# 运行应用
+# 启动应用
 CMD ["./main"]
