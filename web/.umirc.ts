@@ -5,7 +5,9 @@ export default defineConfig({
   access: {},
   model: {},
   initialState: {},
-  request: {},
+  request: {
+    dataField: 'data',
+  },
   layout: {
     title: 'LVerity授权管理系统',
     locale: false,
@@ -15,7 +17,10 @@ export default defineConfig({
     require('autoprefixer'),
   ],
   define: {
-    'process.env.API_URL': '/api',
+    'process.env': {
+      NODE_ENV: process.env.NODE_ENV,
+      API_URL: '/api',
+    },
   },
   proxy: process.env.NODE_ENV === 'development' ? {
     '/api': {
@@ -24,6 +29,9 @@ export default defineConfig({
       secure: false,
     },
   } : undefined,
+  publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
+  hash: true,
+  history: { type: 'browser' },
   routes: [
     {
       path: '/user',

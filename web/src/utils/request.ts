@@ -42,14 +42,15 @@ const processQueue = (error: any = null) => {
 
 // 统一的请求配置
 const requestConfig = {
-  prefix: process.env.API_URL || '/api',
+  prefix: '/api',
   timeout: 10000,
   errorConfig: {
     adaptor: (resData: any) => {
       return {
         ...resData,
         success: resData.code === 0,
-        errorMessage: resData.message || resData.error_message,
+        data: resData.data,
+        errorMessage: resData.message || '请求失败',
       };
     },
   },
@@ -76,10 +77,14 @@ const requestConfig = {
       // 移除已完成的请求
       removePendingRequest(options);
 
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
       const data = await response.clone().json();
       
       // 处理token过期
-      if (data.error_code === 'token_expired') {
+      if (data.code === 401 || data.message === 'token expired') {
         if (!isRefreshing) {
           isRefreshing = true;
           try {
@@ -89,14 +94,12 @@ const requestConfig = {
               processQueue();
             } else {
               processQueue(new Error('刷新token失败'));
-              // 跳转到登录页
               localStorage.removeItem('token');
               history.push('/user/login');
               return Promise.reject(new Error('刷新token失败'));
             }
           } catch (error) {
             processQueue(error);
-            // 跳转到登录页
             localStorage.removeItem('token');
             history.push('/user/login');
             return Promise.reject(error);
