@@ -1,8 +1,6 @@
 :80 {
     root * /srv
     encode gzip
-    try_files {path} /index.html
-    file_server
 
     # Security headers
     header {
@@ -14,19 +12,30 @@
         X-Frame-Options "DENY"
         # keep referrer data off of HTTP connections
         Referrer-Policy "no-referrer-when-downgrade"
+        # CORS headers
+        Access-Control-Allow-Origin *
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization"
+        Access-Control-Allow-Credentials true
     }
 
-    # API reverse proxy
-    handle /auth/* {
+    # API reverse proxy - handle before static files
+    handle_path /auth/* {
         reverse_proxy backend:8080
     }
 
-    handle /api/* {
+    handle_path /api/* {
         reverse_proxy backend:8080
     }
 
-    handle /user/* {
+    handle_path /user/* {
         reverse_proxy backend:8080
+    }
+
+    # Static file handling
+    handle {
+        try_files {path} /index.html
+        file_server
     }
 
     log {
