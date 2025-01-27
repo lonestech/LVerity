@@ -1,0 +1,32 @@
+:80 {
+    root * /srv
+    encode gzip
+    try_files {path} /index.html
+    file_server
+
+    # Security headers
+    header {
+        # enable HSTS
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        # disable clients from sniffing the media type
+        X-Content-Type-Options "nosniff"
+        # clickjacking protection
+        X-Frame-Options "DENY"
+        # keep referrer data off of HTTP connections
+        Referrer-Policy "no-referrer-when-downgrade"
+    }
+
+    # API reverse proxy
+    reverse_proxy /api/* backend:8080 {
+        header_up Host {upstream_hostport}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+}

@@ -23,10 +23,8 @@ RUN pnpm build
 FROM caddy:2-alpine
 
 # 复制构建产物到 Caddy 目录
-COPY --from=builder /app/dist /usr/share/caddy
-
-# 添加默认的 index.html 处理
-RUN echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LVerity授权管理系统</title><script>window.routerBase = "/";</script></head><body><div id="root"></div></body></html>' > /usr/share/caddy/index.html
+COPY --from=builder /app/dist /srv
+COPY --from=builder /app/dist/index.html /srv/index.html
 
 # 暴露端口
 EXPOSE 80

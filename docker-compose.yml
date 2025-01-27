@@ -12,9 +12,7 @@ services:
     networks:
       - lverity-network
     volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./web/Caddyfile:/etc/caddy/Caddyfile
     environment:
       - NODE_ENV=production
     restart: unless-stopped

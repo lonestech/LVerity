@@ -19,14 +19,15 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
+	db := database.GetDB()
+
 	// 创建管理员角色
 	adminRole := &model.Role{
 		Name:        "admin",
 		Description: "System Administrator",
-		Permissions: []string{"*"},
 	}
 	
-	if err := database.DB.Create(adminRole).Error; err != nil {
+	if err := db.Create(adminRole).Error; err != nil {
 		log.Printf("Warning: Failed to create admin role: %v", err)
 	}
 
@@ -44,8 +45,30 @@ func main() {
 		Status:   "active",
 	}
 
-	if err := database.DB.Create(adminUser).Error; err != nil {
+	if err := db.Create(adminUser).Error; err != nil {
 		log.Fatalf("Failed to create admin user: %v", err)
+	}
+
+	// 创建管理员权限
+	adminPermissions := []model.Permission{
+		{Name: "user:manage", Description: "管理用户"},
+		{Name: "role:manage", Description: "管理角色"},
+		{Name: "device:manage", Description: "管理设备"},
+		{Name: "license:manage", Description: "管理授权"},
+	}
+
+	for _, perm := range adminPermissions {
+		if err := db.Create(&perm).Error; err != nil {
+			log.Printf("Warning: Failed to create permission %s: %v", perm.Name, err)
+		}
+		
+		// 关联角色和权限
+		if err := db.Create(&model.RolePermission{
+			RoleID:       adminRole.ID,
+			PermissionID: perm.ID,
+		}).Error; err != nil {
+			log.Printf("Warning: Failed to associate permission %s with admin role: %v", perm.Name, err)
+		}
 	}
 
 	log.Println("Successfully created admin user:")
