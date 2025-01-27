@@ -42,27 +42,29 @@ const processQueue = (error: any = null) => {
 
 // 统一的请求配置
 const requestConfig = {
-  prefix: '/api',
+  prefix: '',  
   timeout: 10000,
   errorConfig: {
     adaptor: (resData: any) => {
       return {
         ...resData,
-        success: resData.code === 0,
+        success: resData.success,  
         data: resData.data,
-        errorMessage: resData.message || '请求失败',
+        errorMessage: resData.error_message || '请求失败',
       };
     },
   },
   requestInterceptors: [
     (url: string, options: any) => {
-      // 添加token
+      // 添加token和Content-Type
       const token = localStorage.getItem('token');
+      options.headers = {
+        ...options.headers,
+        'Content-Type': 'application/json',
+      };
+      
       if (token) {
-        options.headers = {
-          ...options.headers,
-          Authorization: `Bearer ${token}`,
-        };
+        options.headers.Authorization = `Bearer ${token}`;
       }
 
       // 处理重复请求
@@ -84,7 +86,7 @@ const requestConfig = {
       const data = await response.clone().json();
       
       // 处理token过期
-      if (data.code === 401 || data.message === 'token expired') {
+      if (data.code === 401 || data.error_message === 'token expired') {
         if (!isRefreshing) {
           isRefreshing = true;
           try {

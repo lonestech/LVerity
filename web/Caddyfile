@@ -17,11 +17,16 @@
     }
 
     # API reverse proxy
-    reverse_proxy /api/* backend:8080 {
-        header_up Host {upstream_hostport}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
+    handle /auth/* {
+        reverse_proxy backend:8080
+    }
+
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    handle /user/* {
+        reverse_proxy backend:8080
     }
 
     log {
