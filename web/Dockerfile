@@ -7,8 +7,8 @@ WORKDIR /app
 # 安装pnpm
 RUN npm install -g pnpm
 
-# 复制package.json和pnpm-lock.yaml（如果存在）
-COPY package*.json pnpm-lock.yaml* ./
+# 复制前端项目文件
+COPY package.json pnpm-lock.yaml ./
 
 # 安装依赖
 RUN pnpm install
@@ -22,9 +22,6 @@ RUN pnpm build
 # 运行阶段
 FROM caddy:2-alpine
 
-# 复制 Caddy 配置
-COPY ../Caddyfile /etc/caddy/Caddyfile
-
 # 复制构建产物到 Caddy 目录
 COPY --from=builder /app/dist /usr/share/caddy
 
@@ -33,4 +30,4 @@ EXPOSE 80
 EXPOSE 443
 
 # Caddy 会自动使用配置文件启动
-CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

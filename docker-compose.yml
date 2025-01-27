@@ -3,8 +3,8 @@ version: '3'
 services:
   frontend:
     build: 
-      context: .
-      dockerfile: web/Dockerfile
+      context: ./web
+      dockerfile: Dockerfile
     ports:
       - "8081:80"
       - "8443:443"
