@@ -25,9 +25,11 @@ FROM caddy:2-alpine
 # 复制构建产物到 Caddy 目录
 COPY --from=builder /app/dist /usr/share/caddy
 
+# 添加默认的 index.html 处理
+RUN echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LVerity授权管理系统</title><script>window.routerBase = "/";</script></head><body><div id="root"></div></body></html>' > /usr/share/caddy/index.html
+
 # 暴露端口
 EXPOSE 80
-EXPOSE 443
 
-# Caddy 会自动使用配置文件启动
+# 启动 Caddy
 CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

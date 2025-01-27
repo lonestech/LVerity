@@ -34,7 +34,8 @@ services:
       - DB_NAME=lverity
       - JWT_SECRET=abcdefghijklmnopq
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - lverity-network
     restart: unless-stopped
@@ -50,7 +51,29 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - lverity-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: go run scripts/init_admin.go
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root123
+      - DB_NAME=lverity
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - lverity-network
 
 networks:
   lverity-network:

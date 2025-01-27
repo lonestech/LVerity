@@ -29,7 +29,7 @@ export default defineConfig({
       secure: false,
     },
   } : undefined,
-  publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
+  publicPath: '/',
   hash: true,
   history: { type: 'browser' },
   routes: [
@@ -81,69 +81,9 @@ export default defineConfig({
       ],
     },
     {
-      path: '/device',
-      name: '设备管理',
-      icon: 'laptop',
-      access: 'normalRoute',
-      routes: [
-        {
-          path: '/device',
-          redirect: '/device/list',
-        },
-        {
-          name: '设备列表',
-          path: '/device/list',
-          component: './Device',
-          access: 'normalRoute',
-        },
-        {
-          name: '设备详情',
-          path: '/device/:id',
-          component: './Device/Detail',
-          hideInMenu: true,
-          access: 'normalRoute',
-        },
-      ],
-    },
-    {
-      path: '/system',
-      name: '系统管理',
-      icon: 'setting',
-      access: 'adminRoute',
-      routes: [
-        {
-          name: '用户管理',
-          path: '/system/users',
-          component: './User',
-          access: 'adminRoute',
-          icon: 'user',
-        },
-        {
-          name: '角色管理',
-          path: '/system/roles',
-          component: './Role',
-          access: 'adminRoute',
-          icon: 'team',
-        },
-      ],
-    },
-    {
-      path: '/account',
-      name: '个人中心',
-      icon: 'user',
-      hideInMenu: true,
-      routes: [
-        {
-          name: '个人设置',
-          path: '/account/settings',
-          component: './Account/Settings',
-        },
-        {
-          name: '修改密码',
-          path: '/account/change-password',
-          component: './Account/ChangePassword',
-        },
-      ],
+      path: '*',
+      layout: false,
+      component: './404',
     },
   ],
   npmClient: 'pnpm',

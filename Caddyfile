@@ -28,11 +28,14 @@
     # 静态文件服务
     handle {
         try_files {path} /index.html
-        file_server
+        file_server {
+            browse
+        }
     }
 
     log {
         output stdout
         format console
+        level INFO
     }
 }
