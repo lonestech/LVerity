@@ -1,0 +1,26 @@
+:80 {
+    # 前端静态文件
+    handle /static/* {
+        root * /usr/share/caddy
+        file_server
+    }
+
+    # API 反向代理
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    # 其他所有请求转发到前端
+    handle {
+        root * /usr/share/caddy
+        try_files {path} /index.html
+        file_server
+    }
+
+    # 基本设置
+    encode gzip
+    log {
+        output stdout
+        format console
+    }
+}

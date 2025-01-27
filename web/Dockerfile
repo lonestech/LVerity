@@ -20,16 +20,17 @@ COPY . .
 RUN pnpm build
 
 # 运行阶段
-FROM nginx:alpine
+FROM caddy:2-alpine
 
-# 复制nginx配置
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 复制 Caddy 配置
+COPY ../Caddyfile /etc/caddy/Caddyfile
 
-# 复制构建产物到nginx目录
-COPY --from=builder /app/dist /usr/share/nginx/html
+# 复制构建产物到 Caddy 目录
+COPY --from=builder /app/dist /usr/share/caddy
 
 # 暴露端口
 EXPOSE 80
+EXPOSE 443
 
-# 启动nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Caddy 会自动使用配置文件启动
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]

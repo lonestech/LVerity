@@ -3,14 +3,18 @@ version: '3'
 services:
   frontend:
     build: 
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - backend
     networks:
       - lverity-network
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
     environment:
       - NODE_ENV=production
     restart: unless-stopped
@@ -48,9 +52,25 @@ services:
       - lverity-network
     restart: unless-stopped
 
+  caddy:
+    image: caddy:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+    networks:
+      - lverity-network
+    restart: unless-stopped
+
 networks:
   lverity-network:
     driver: bridge
 
 volumes:
   mysql-data:
+  caddy_data:
+  caddy_config:

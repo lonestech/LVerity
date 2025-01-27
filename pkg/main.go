@@ -41,20 +41,11 @@ func main() {
 	corsConfig.AllowCredentials = true
 	r.Use(cors.New(corsConfig))
 
-	// 静态文件服务
-	r.Static("/static", "./web/static")
-	r.LoadHTMLGlob("web/templates/*")
-
-	// 主页路由
-	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title": "LVerity授权管理系统",
-		})
-	})
-
-	r.GET("/home", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title": "LVerity授权管理系统",
+	// 健康检查路由
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+			"message": "Service is healthy",
 		})
 	})
 
@@ -102,11 +93,13 @@ func main() {
 	}
 
 	// 启动服务器
-	port := config.GlobalConfig.Server.Port
+	port := config.GetConfig().Server.Port
 	if port == 0 {
 		port = 8080
 	}
-	if err := r.Run(fmt.Sprintf(":%d", port)); err != nil {
+	addr := fmt.Sprintf("%s:%d", config.GetConfig().Server.Host, port)
+	log.Printf("Server is running on %s", addr)
+	if err := r.Run(addr); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
