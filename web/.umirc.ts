@@ -53,32 +53,6 @@ export default defineConfig({
       name: '首页',
       icon: 'home',
       component: './Home',
-      access: 'normalRoute',
-    },
-    {
-      path: '/license',
-      name: '授权管理',
-      icon: 'key',
-      access: 'normalRoute',
-      routes: [
-        {
-          path: '/license',
-          redirect: '/license/list',
-        },
-        {
-          name: '授权列表',
-          path: '/license/list',
-          component: './License',
-          access: 'normalRoute',
-        },
-        {
-          name: '授权详情',
-          path: '/license/:id',
-          component: './License/Detail',
-          hideInMenu: true,
-          access: 'normalRoute',
-        },
-      ],
     },
     {
       path: '*',
@@ -87,7 +61,4 @@ export default defineConfig({
     },
   ],
   npmClient: 'pnpm',
-  theme: {
-    'primary-color': '#1890ff',
-  },
 });
