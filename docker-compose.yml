@@ -6,8 +6,8 @@ services:
       context: .
       dockerfile: web/Dockerfile
     ports:
-      - "80:80"
-      - "443:443"
+      - "8081:80"
+      - "8443:443"
     depends_on:
       - backend
     networks:
@@ -48,20 +48,6 @@ services:
       - MYSQL_DATABASE=lverity
     volumes:
       - mysql-data:/var/lib/mysql
-    networks:
-      - lverity-network
-    restart: unless-stopped
-
-  caddy:
-    image: caddy:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - frontend
     networks:
       - lverity-network
     restart: unless-stopped
