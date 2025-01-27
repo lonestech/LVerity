@@ -17,7 +17,7 @@ RUN go mod download
 COPY . .
 
 # 构建应用
-RUN CGO_ENABLED=1 GOOS=linux go build -a -o main ./cmd/main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -a -o main ./pkg/main.go
 
 # 运行阶段
 FROM alpine:latest
@@ -32,7 +32,7 @@ WORKDIR /app
 
 # 从构建阶段复制二进制文件
 COPY --from=builder /app/main .
-COPY --from=builder /app/configs ./configs
+COPY --from=builder /app/config.yaml ./
 COPY --from=builder /app/scripts ./scripts
 
 # 暴露端口
