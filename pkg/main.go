@@ -35,7 +35,7 @@ func main() {
 
 	// CORS 配置
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://localhost:8001", "http://127.0.0.1:8001"}
+	corsConfig.AllowOrigins = []string{"*"}  
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Authorization"}
 	corsConfig.AllowCredentials = true
