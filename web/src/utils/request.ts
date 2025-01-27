@@ -42,14 +42,14 @@ const processQueue = (error: any = null) => {
 
 // 统一的请求配置
 const requestConfig = {
-  prefix: '/api',
+  prefix: process.env.API_URL || '/api',
   timeout: 10000,
   errorConfig: {
     adaptor: (resData: any) => {
       return {
         ...resData,
-        success: resData.success,
-        errorMessage: resData.error_message,
+        success: resData.code === 0,
+        errorMessage: resData.message || resData.error_message,
       };
     },
   },

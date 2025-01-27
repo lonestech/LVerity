@@ -14,13 +14,16 @@ export default defineConfig({
     require('tailwindcss'),
     require('autoprefixer'),
   ],
-  proxy: {
+  define: {
+    'process.env.API_URL': '/api',
+  },
+  proxy: process.env.NODE_ENV === 'development' ? {
     '/api': {
       target: 'http://localhost:8080',
       changeOrigin: true,
       secure: false,
     },
-  },
+  } : undefined,
   routes: [
     {
       path: '/user',
