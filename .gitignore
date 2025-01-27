@@ -1,0 +1,35 @@
+# 编译输出
+/bin
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 测试文件
+*.test
+*.tmp
+
+# 依赖目录
+/vendor/
+
+# IDE 文件
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 环境文件
+.env
+.env.*
+
+# 日志文件
+*.log
+
+# 数据库文件
+*.db
+*.sqlite
+
+# 其他
+.DS_Store
+Thumbs.db

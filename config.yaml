@@ -1,0 +1,39 @@
+server:
+  port: 8080
+  host: "0.0.0.0"
+  mode: "debug"
+
+database:
+  host: "localhost"
+  port: 3306
+  user: "lverity"
+  password: "lverity123"
+  dbname: "lverity"
+
+jwt:
+  secret: "tBcYB1u9EpXUp18alPWWq8B9fCErFoY4"
+  expire: 86400s
+  issuer: "LVerity"
+
+cors:
+  allowed_origins:
+    - "*"
+  allowed_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+  allowed_headers:
+    - "Authorization"
+    - "Content-Type"
+  allow_credentials: true
+  max_age: 86400
+
+log:
+  level: "debug"
+  file: "logs/lverity.log"
+  max_size: 100
+  max_backups: 10
+  max_age: 30
+  compress: true

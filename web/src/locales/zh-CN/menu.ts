@@ -1,0 +1,18 @@
+export default {
+  'menu.welcome': '欢迎',
+  'menu.device': '设备管理',
+  'menu.device.list': '设备列表',
+  'menu.device.detail': '设备详情',
+  'menu.device.group': '设备分组',
+  'menu.device.blacklist': '黑名单规则',
+  'menu.monitor': '设备监控',
+  'menu.alert': '告警管理',
+  'menu.license': '授权管理',
+  'menu.license.list': '授权列表',
+  'menu.license.detail': '授权详情',
+  'menu.system': '系统管理',
+  'menu.system.user': '用户管理',
+  'menu.system.role': '角色管理',
+  'menu.system.log': '系统日志',
+  'menu.login': '登录',
+};
