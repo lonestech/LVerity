@@ -1,5 +1,7 @@
-:8081 {
-    # 启用 CORS
+:80 {
+    root * /usr/share/caddy
+    encode gzip
+
     header {
         Access-Control-Allow-Origin *
         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
@@ -7,22 +9,8 @@
         Access-Control-Allow-Credentials true
     }
 
-    # API 反向代理
-    handle /api/* {
-        reverse_proxy backend:8080
-    }
+    reverse_proxy /api/* backend:8080
 
-    # 静态文件服务
-    handle {
-        root * /usr/share/caddy
-        try_files {path} /index.html
-        file_server
-    }
-
-    # 基本设置
-    encode gzip
-    log {
-        output stdout
-        format console
-    }
+    try_files {path} /index.html
+    file_server
 }
