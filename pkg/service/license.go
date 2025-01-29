@@ -430,3 +430,94 @@ func UpdateLicenseFeatures(licenseID string, features []string) error {
 		Where("id = ?", licenseID).
 		Update("features", string(featuresJSON)).Error
 }
+
+// ListLicenses 获取授权码列表
+func ListLicenses(page string, pageSize string, status string, groupID string) ([]model.License, int64, error) {
+	var licenses []model.License
+	var total int64
+    
+	offset, limit := utils.GetPagination(page, pageSize)
+	query := store.GetDB().Model(&model.License{})
+    
+	// 应用过滤条件
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+	if groupID != "" {
+		query = query.Where("group_id = ?", groupID)
+	}
+    
+	// 获取总数
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+    
+	// 获取分页数据
+	if err := query.Offset(offset).Limit(limit).Find(&licenses).Error; err != nil {
+		return nil, 0, err
+	}
+    
+	return licenses, total, nil
+}
+
+// GenerateLicense 生成授权码
+func GenerateLicense(licenseType model.LicenseType, maxDevices int, startTime time.Time, endTime time.Time, groupID string, features []string, usageLimit int64) (*model.License, error) {
+	// 生成授权码
+	code := utils.GenerateUUID()
+    
+	license := &model.License{
+		Code:       code,
+		Type:       licenseType,
+		Status:     model.LicenseStatusNormal,
+		MaxDevices: maxDevices,
+		StartTime:  startTime,
+		EndTime:    endTime,
+		GroupID:    groupID,
+		Features:   features,
+		UsageLimit: usageLimit,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+    
+	if err := store.GetDB().Create(license).Error; err != nil {
+		return nil, err
+	}
+    
+	return license, nil
+}
+
+// GetLicenseByCode 根据授权码获取授权信息
+func GetLicenseByCode(code string) (*model.License, error) {
+	var license model.License
+	if err := store.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
+		return nil, err
+	}
+	return &license, nil
+}
+
+// DeleteLicense 删除授权码
+func DeleteLicense(code string) error {
+	result := store.GetDB().Delete(&model.License{}, "code = ?", code)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("license not found")
+	}
+	return nil
+}
+
+// UpdateLicenseMetadata 更新授权码元数据
+func UpdateLicenseMetadata(code string, metadata string) error {
+	result := store.GetDB().Model(&model.License{}).
+		Where("code = ?", code).
+		Update("metadata", metadata)
+    
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("license not found")
+	}
+	return nil
+}

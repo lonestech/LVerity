@@ -524,8 +524,27 @@ func CreateLicense(c *gin.Context) {
         })
         return
     }
+
+    // 解析过期时间
+    expiresAt, err := time.Parse("2006-01-02", req.ExpiresAt)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{
+            "success": false,
+            "error_message": "invalid expires_at format, should be YYYY-MM-DD",
+        })
+        return
+    }
     
-    license, err := service.GenerateLicense(req.Type, req.ExpireDays, req.MaxDevices, req.GroupID, req.Features, req.ExpiresAt, req.UsageLimit, req.Tags, req.Metadata)
+    startTime := time.Now()
+    license, err := service.GenerateLicense(
+        req.Type,
+        req.MaxDevices,
+        startTime,
+        expiresAt,
+        req.GroupID,
+        req.Features,
+        req.UsageLimit,
+    )
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{
             "success": false,

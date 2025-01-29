@@ -361,3 +361,46 @@ func CalculateDeviceRiskLevel(deviceID string) int {
 
 	return riskLevel
 }
+
+// ListDevices 获取设备列表
+func ListDevices(page string, pageSize string, filters ...string) ([]model.Device, int64, error) {
+	var devices []model.Device
+	var total int64
+    
+	offset, limit := utils.GetPagination(page, pageSize)
+	query := store.GetDB().Model(&model.Device{})
+    
+	// 应用过滤条件
+	for _, filter := range filters {
+		if filter != "" {
+			query = query.Where("status = ?", filter)
+		}
+	}
+    
+	// 获取总数
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+    
+	// 获取分页数据
+	if err := query.Offset(offset).Limit(limit).Find(&devices).Error; err != nil {
+		return nil, 0, err
+	}
+    
+	return devices, total, nil
+}
+
+// UpdateDevice 更新设备
+func UpdateDevice(deviceID string, updates map[string]interface{}) error {
+	// 验证设备是否存在
+	if err := store.GetDB().Where("id = ?", deviceID).First(&model.Device{}).Error; err != nil {
+		return err
+	}
+    
+	// 更新设备信息
+	if err := store.GetDB().Model(&model.Device{}).Where("id = ?", deviceID).Updates(updates).Error; err != nil {
+		return err
+	}
+    
+	return nil
+}
