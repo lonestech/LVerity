@@ -485,3 +485,126 @@ func UpdateLicenseFeatures(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "License features updated successfully"})
 }
+
+// ListLicenses 获取授权码列表
+func ListLicenses(c *gin.Context) {
+    // 从查询参数获取分页信息
+    page := c.DefaultQuery("page", "1")
+    pageSize := c.DefaultQuery("pageSize", "10")
+    
+    // 获取筛选条件
+    status := c.DefaultQuery("status", "")
+    groupID := c.DefaultQuery("group_id", "")
+    
+    licenses, total, err := service.ListLicenses(page, pageSize, status, groupID)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data": gin.H{
+            "list": licenses,
+            "total": total,
+        },
+    })
+}
+
+// CreateLicense 创建授权码
+func CreateLicense(c *gin.Context) {
+    var req GenerateLicenseRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+    
+    license, err := service.GenerateLicense(req.Type, req.ExpireDays, req.MaxDevices, req.GroupID, req.Features, req.ExpiresAt, req.UsageLimit, req.Tags, req.Metadata)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data": license,
+    })
+}
+
+// GetLicense 获取授权码详情
+func GetLicense(c *gin.Context) {
+    code := c.Param("code")
+    
+    license, err := service.GetLicenseByCode(code)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data": license,
+    })
+}
+
+// UpdateLicense 更新授权码
+func UpdateLicense(c *gin.Context) {
+    code := c.Param("code")
+    var req UpdateLicenseMetadataRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+    
+    err := service.UpdateLicenseMetadata(code, req.Metadata)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data": gin.H{
+            "message": "License updated successfully",
+        },
+    })
+}
+
+// DeleteLicense 删除授权码
+func DeleteLicense(c *gin.Context) {
+    code := c.Param("code")
+    
+    err := service.DeleteLicense(code)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data": gin.H{
+            "message": "License deleted successfully",
+        },
+    })
+}

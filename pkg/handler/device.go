@@ -142,6 +142,106 @@ func GetDevices(c *gin.Context) {
 	c.JSON(http.StatusOK, devices)
 }
 
+// ListDevices 获取设备列表
+func ListDevices(c *gin.Context) {
+    // 从查询参数获取分页信息
+    page := c.DefaultQuery("page", "1")
+    pageSize := c.DefaultQuery("pageSize", "10")
+
+    devices, total, err := service.ListDevices(page, pageSize)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data": gin.H{
+            "list": devices,
+            "total": total,
+        },
+    })
+}
+
+// CreateDevice 创建设备
+func CreateDevice(c *gin.Context) {
+    var req RegisterDeviceRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+
+    device, err := service.RegisterDevice(req.DiskID, req.BIOS, req.Motherboard, req.Name)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data": device,
+    })
+}
+
+// UpdateDevice 更新设备
+func UpdateDevice(c *gin.Context) {
+    deviceID := c.Param("id")
+    var req UpdateDeviceInfoRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+
+    err := service.UpdateDevice(deviceID, req.Updates)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data": gin.H{
+            "message": "Device updated successfully",
+        },
+    })
+}
+
+// DeleteDevice 删除设备
+func DeleteDevice(c *gin.Context) {
+    deviceID := c.Param("id")
+
+    err := service.DeleteDevice(deviceID)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "success": false,
+            "error_message": err.Error(),
+        })
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data": gin.H{
+            "message": "Device deleted successfully",
+        },
+    })
+}
+
 // ExportDeviceLogs 导出设备日志
 func ExportDeviceLogs(c *gin.Context) {
 	var req ExportLogsRequest
