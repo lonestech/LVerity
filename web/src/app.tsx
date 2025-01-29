@@ -40,17 +40,24 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     },
     layout: 'mix',
     fixedHeader: true,
-    logout: () => {
-      localStorage.removeItem('token');
-      setInitialState((s) => ({ ...s, currentUser: undefined }));
-      history.push('/user/login');
+    logout: async () => {
+      try {
+        // 清除本地存储
+        localStorage.removeItem('token');
+        // 更新状态
+        await setInitialState((s) => ({ ...s, currentUser: undefined }));
+        // 重定向到登录页
+        window.location.href = '/user/login';
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
     },
     rightRender: false,
     onPageChange: () => {
       const { location } = history;
       // 如果没有登录，重定向到 login
       if (!initialState?.currentUser && location.pathname !== '/user/login') {
-        history.push('/user/login');
+        window.location.href = '/user/login';
       }
     },
   };

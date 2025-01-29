@@ -46,13 +46,14 @@ export default defineConfig({
     },
     {
       path: '/',
-      redirect: '/home',
+      redirect: '/user/login',  
     },
     {
       path: '/home',
       name: '首页',
       icon: 'home',
       component: './Home',
+      wrappers: ['@/wrappers/auth'],  
     },
     {
       path: '*',
