@@ -20,8 +20,9 @@ func SetupRouter() *gin.Engine {
 	// 公开路由组
 	public := r.Group("/auth")
 	{
-		public.POST("/login", handler.Login)
-		public.POST("/refresh", middleware.JWTAuth(), handler.RefreshToken)
+		public.GET("/captcha", handler.GetCaptcha)      // 获取验证码
+		public.POST("/login", handler.Login)            // 用户登录
+		public.POST("/refresh", middleware.JWTAuth(), handler.RefreshToken)  // 刷新令牌
 	}
 
 	// 用户相关路由组

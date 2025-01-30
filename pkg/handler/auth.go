@@ -10,6 +10,7 @@ import (
 type LoginRequest struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
+	Captcha  string `json:"captcha" binding:"required"`
 }
 
 // CreateUserRequest 创建用户请求
@@ -25,6 +26,26 @@ type ChangePasswordRequest struct {
 	NewPassword string `json:"new_password" binding:"required"`
 }
 
+// GetCaptcha 获取验证码
+func GetCaptcha(c *gin.Context) {
+	id, b64s, err := service.GenerateCaptcha()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error_message": "生成验证码失败",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"captcha_id": id,
+			"captcha_image": b64s,
+		},
+	})
+}
+
 // Login 用户登录
 func Login(c *gin.Context) {
 	var req LoginRequest
@@ -32,6 +53,15 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error_message": err.Error(),
+		})
+		return
+	}
+
+	// 验证验证码
+	if !service.VerifyCaptcha(req.Captcha) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error_message": "验证码错误",
 		})
 		return
 	}
