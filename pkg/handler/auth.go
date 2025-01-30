@@ -8,9 +8,10 @@ import (
 
 // LoginRequest 登录请求
 type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	Captcha  string `json:"captcha" binding:"required"`
+	Username  string `json:"username" binding:"required"`
+	Password  string `json:"password" binding:"required"`
+	Captcha   string `json:"captcha" binding:"required"`
+	CaptchaId string `json:"captcha_id" binding:"required"`
 }
 
 // CreateUserRequest 创建用户请求
@@ -58,7 +59,7 @@ func Login(c *gin.Context) {
 	}
 
 	// 验证验证码
-	if !service.VerifyCaptcha(req.Captcha) {
+	if !service.VerifyCaptcha(req.CaptchaId, req.Captcha) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error_message": "验证码错误",
