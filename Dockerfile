@@ -35,11 +35,7 @@ COPY --from=builder /app/main .
 COPY --from=builder /app/config.yaml ./
 COPY --from=builder /app/scripts ./scripts
 
-# 创建字体目录
-RUN mkdir -p /usr/share/fonts/custom
-
-# 复制验证码所需的字体文件
-COPY fonts/wqy-microhei.ttc /usr/share/fonts/custom/
+# 更新字体缓存
 RUN fc-cache -f -v
 
 # 暴露端口
