@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/mojocn/base64Captcha"
+	"image/color"
 )
 
 var store = base64Captcha.DefaultMemStore
@@ -14,8 +15,8 @@ var captchaConfig = base64Captcha.DriverString{
 	ShowLineOptions: 2 | 4,
 	Length:         4,
 	Source:         "1234567890",
-	BgColor:        &amp;color.RGBA{R: 255, G: 255, B: 255, A: 255},
-	Fonts:          []string{"wqy-microhei.ttc"},
+	BgColor:        &color.RGBA{R: 255, G: 255, B: 255, A: 255},
+	Fonts:          []string{"DejaVuSans"},
 }
 
 // GenerateCaptcha 生成验证码
