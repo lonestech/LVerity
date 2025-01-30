@@ -5,12 +5,13 @@ import (
 	"LVerity/pkg/store"
 	"LVerity/pkg/utils"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 )
 
 // GenerateLicense 生成授权码
-func GenerateLicense(licenseType model.LicenseType, maxDevices int, startTime, expireTime time.Time, groupID string, features []string, usageLimit int64) (*model.License, error) {
+func GenerateLicense(licenseType model.LicenseType, maxDevices int, startTime time.Time, expireTime time.Time, groupID string, features []string, usageLimit int64) (*model.License, error) {
 	// 生成授权码
 	code := utils.GenerateUUID()
 
@@ -64,18 +65,9 @@ func VerifyLicense(code string) (bool, error) {
 		return false, fmt.Errorf("license is not valid")
 	}
 
-	// 检查有效期
-	now := time.Now()
-	if now.Before(license.StartTime) {
-		return false, fmt.Errorf("license is not yet valid")
-	}
-	if now.After(license.ExpireTime) {
+	// 检查过期时间
+	if time.Now().After(license.ExpireTime) {
 		return false, fmt.Errorf("license has expired")
-	}
-
-	// 检查使用次数
-	if license.UsageLimit > 0 && license.UsageCount >= license.UsageLimit {
-		return false, fmt.Errorf("license usage limit exceeded")
 	}
 
 	return true, nil
@@ -100,19 +92,15 @@ func ActivateLicense(code string, deviceID string) error {
 		return fmt.Errorf("license is not unused")
 	}
 
-	// 检查有效期
-	now := time.Now()
-	if now.Before(license.StartTime) {
-		return fmt.Errorf("license is not yet valid")
-	}
-	if now.After(license.ExpireTime) {
+	// 检查过期时间
+	if time.Now().After(license.ExpireTime) {
 		return fmt.Errorf("license has expired")
 	}
 
 	// 更新授权状态
 	license.Status = model.LicenseStatusUsed
 	license.DeviceID = deviceID
-	license.UpdatedAt = now
+	license.UpdatedAt = time.Now()
 
 	if err := store.GetDB().Save(&license).Error; err != nil {
 		return fmt.Errorf("failed to update license: %v", err)
@@ -123,10 +111,10 @@ func ActivateLicense(code string, deviceID string) error {
 		ID:        utils.GenerateUUID(),
 		LicenseID: license.ID,
 		DeviceID:  deviceID,
-		StartTime: now,
+		StartTime: time.Now(),
 		Status:    "active",
-		CreatedAt: now,
-		UpdatedAt: now,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	if err := store.GetDB().Create(usage).Error; err != nil {
@@ -137,7 +125,7 @@ func ActivateLicense(code string, deviceID string) error {
 }
 
 // BatchCreateLicense 批量生成授权码
-func BatchCreateLicense(count int, licenseType model.LicenseType, maxDevices int, startTime, expireTime time.Time, groupID string, features []string, usageLimit int64) ([]*model.License, error) {
+func BatchCreateLicense(count int, licenseType model.LicenseType, maxDevices int, startTime time.Time, expireTime time.Time, groupID string, features []string, usageLimit int64) ([]*model.License, error) {
 	var licenses []*model.License
 
 	// 批量生成授权码
@@ -178,7 +166,7 @@ func BatchCreateLicense(count int, licenseType model.LicenseType, maxDevices int
 }
 
 // QueryLicenses 查询授权记录
-func QueryLicenses(status model.LicenseStatus, startTime, endTime time.Time) ([]model.License, error) {
+func QueryLicenses(status model.LicenseStatus, startTime time.Time, endTime time.Time) ([]model.License, error) {
 	var licenses []model.License
 	query := store.GetDB().Model(&model.License{})
 
@@ -224,7 +212,7 @@ func ImportLicenses(licenses []model.License) error {
 }
 
 // QueryLicenseStats 查询授权统计信息
-func QueryLicenseStats(startTime, endTime time.Time) (*model.LicenseStats, error) {
+func QueryLicenseStats(startTime time.Time, endTime time.Time) (*model.LicenseStats, error) {
 	stats := &model.LicenseStats{}
 
 	// 统计总授权数
@@ -264,7 +252,7 @@ func QueryLicenseStats(startTime, endTime time.Time) (*model.LicenseStats, error
 }
 
 // QueryDeviceLocationStats 查询设备位置统计信息
-func QueryDeviceLocationStats(startTime, endTime time.Time) (*model.DeviceLocationStats, error) {
+func QueryDeviceLocationStats(startTime time.Time, endTime time.Time) (*model.DeviceLocationStats, error) {
 	stats := &model.DeviceLocationStats{}
 
 	// 统计各省份设备数量
@@ -456,10 +444,18 @@ func AddTagsToLicense(licenseID string, tagIDs []string) error {
 }
 
 // UpdateLicenseMetadata 更新授权码元数据
-func UpdateLicenseMetadata(licenseID string, metadata string) error {
-	return store.GetDB().Model(&model.License{}).
-		Where("id = ?", licenseID).
-		Update("metadata", metadata).Error
+func UpdateLicenseMetadata(code string, metadata string) error {
+	result := store.GetDB().Model(&model.License{}).
+		Where("code = ?", code).
+		Update("metadata", metadata)
+    
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("license not found")
+	}
+	return nil
 }
 
 // UpdateLicenseFeatures 更新授权码功能列表
@@ -532,21 +528,6 @@ func GetLicenseByCode(code string) (*model.License, error) {
 // DeleteLicense 删除授权码
 func DeleteLicense(code string) error {
 	result := store.GetDB().Delete(&model.License{}, "code = ?", code)
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return errors.New("license not found")
-	}
-	return nil
-}
-
-// UpdateLicenseMetadata 更新授权码元数据
-func UpdateLicenseMetadata(code string, metadata string) error {
-	result := store.GetDB().Model(&model.License{}).
-		Where("code = ?", code).
-		Update("metadata", metadata)
-    
 	if result.Error != nil {
 		return result.Error
 	}

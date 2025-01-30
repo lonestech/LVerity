@@ -280,11 +280,15 @@ func GetDeviceUsage(c *gin.Context) {
 		return
 	}
 
+	if device.UsageStats == nil {
+		device.UsageStats = &model.UsageStats{}
+	}
+
 	usage := gin.H{
 		"device_id":        device.ID,
-		"avg_usage_time":   device.AvgUsageTime,
-		"peak_usage_time":  device.PeakUsageTime,
-		"last_active_date": device.LastActiveDate,
+		"avg_usage_time":   device.UsageStats.AverageUsageTime,
+		"peak_usage_time":  device.UsageStats.PeakUsageTime,
+		"last_active_date": device.UsageStats.LastActiveDate,
 	}
 
 	c.JSON(http.StatusOK, usage)
@@ -312,13 +316,17 @@ func GetDeviceUsageReport(c *gin.Context) {
 		return
 	}
 
+	if device.UsageStats == nil {
+		device.UsageStats = &model.UsageStats{}
+	}
+
 	report := gin.H{
 		"device_id":        device.ID,
 		"name":            device.Name,
 		"status":          device.Status,
-		"avg_usage_time":   device.AvgUsageTime,
-		"peak_usage_time":  device.PeakUsageTime,
-		"last_active_date": device.LastActiveDate,
+		"avg_usage_time":   device.UsageStats.AverageUsageTime,
+		"peak_usage_time":  device.UsageStats.PeakUsageTime,
+		"last_active_date": device.UsageStats.LastActiveDate,
 		"alert_count":     device.AlertCount,
 		"last_alert_time": device.LastAlertTime,
 		"risk_level":      device.RiskLevel,

@@ -204,15 +204,15 @@ func GetDeviceStatus(c *gin.Context) {
 	}
 
 	// 计算当前风险等级
-	riskLevel := utils.CalculateDeviceRisk(&device)
+	riskLevel := utils.CalculateDeviceRisk(&device, behaviors)
 
 	response := gin.H{
-		"device_id":        device.ID,
-		"status":          device.Status,
-		"risk_level":      riskLevel,
-		"last_heartbeat":  device.LastHeartbeat,
-		"abnormal_count":  len(behaviors),
-		"behaviors":       behaviors,
+		"device_id":       device.ID,
+		"status":         device.Status,
+		"risk_level":     riskLevel,
+		"last_heartbeat": device.LastHeartbeat,
+		"abnormal_count": len(behaviors),
+		"behaviors":      behaviors,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -222,7 +222,7 @@ func GetDeviceStatus(c *gin.Context) {
 func AnalyzeDeviceBehavior(c *gin.Context) {
 	deviceID := c.Param("deviceID")
 	var device model.Device
-	var behaviors []*model.AbnormalBehavior
+	var behaviors []model.AbnormalBehavior
 
 	// 获取设备信息
 	if err := store.GetDB().First(&device, "id = ?", deviceID).Error; err != nil {
@@ -237,7 +237,7 @@ func AnalyzeDeviceBehavior(c *gin.Context) {
 	}
 
 	// 计算设备风险
-	risk := utils.CalculateDeviceRisk(&device)
+	risk := utils.CalculateDeviceRisk(&device, behaviors)
 
 	analysis := map[string]interface{}{
 		"deviceID":      deviceID,
@@ -253,12 +253,19 @@ func AnalyzeDeviceBehavior(c *gin.Context) {
 func GetDeviceRisk(c *gin.Context) {
 	deviceID := c.Param("deviceID")
 	var device model.Device
+	var behaviors []model.AbnormalBehavior
+
 	if err := store.GetDB().First(&device, "id = ?", deviceID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	risk := utils.CalculateDeviceRisk(&device)
+	if err := store.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	risk := utils.CalculateDeviceRisk(&device, behaviors)
 	c.JSON(http.StatusOK, gin.H{
 		"deviceID": deviceID,
 		"risk":     risk,

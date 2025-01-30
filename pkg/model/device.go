@@ -17,6 +17,16 @@ const (
 	DeviceStatusUnknown  = "unknown"  // 未知状态
 )
 
+// UsageStats 设备使用统计
+type UsageStats struct {
+	LastActiveDate    time.Time `json:"last_active_date"`
+	TotalUsageTime    int64     `json:"total_usage_time"`
+	AverageUsageTime  int64     `json:"average_usage_time"`
+	PeakUsageTime     int64     `json:"peak_usage_time"`
+	DailyActiveCount  int       `json:"daily_active_count"`
+	WeeklyActiveCount int       `json:"weekly_active_count"`
+}
+
 // Device 设备信息
 type Device struct {
 	ID              string         `gorm:"primaryKey;type:varchar(191)" json:"id"`
@@ -37,16 +47,14 @@ type Device struct {
 	BlockReason     string         `gorm:"column:block_reason;type:text" json:"block_reason"`
 	BlockTime       *time.Time     `gorm:"column:block_time" json:"block_time"`
 	UnblockTime     *time.Time     `gorm:"column:unblock_time" json:"unblock_time"`
-	RiskLevel       int            `gorm:"column:risk_level;default:0" json:"risk_level"`
+	RiskLevel       float64        `gorm:"column:risk_level;default:0" json:"risk_level"`
 	LastAlertTime   *time.Time     `gorm:"column:last_alert_time" json:"last_alert_time"`
 	AlertCount      int            `gorm:"column:alert_count;default:0" json:"alert_count"`
 	HeartbeatRate   int            `gorm:"column:heartbeat_rate;default:60" json:"heartbeat_rate"`
 	LastHeartbeat   *time.Time     `gorm:"column:last_heartbeat" json:"last_heartbeat"`
 	LastSeen        *time.Time     `gorm:"column:last_seen" json:"last_seen"`
-	AvgUsageTime    int64          `gorm:"column:average_usage_time" json:"avg_usage_time"`
+	UsageStats      *UsageStats    `gorm:"-" json:"usage_stats,omitempty"`
 	Metadata        string         `gorm:"column:metadata;type:text" json:"metadata"`
-	PeakUsageTime   int64          `gorm:"column:peak_usage_time" json:"peak_usage_time"`
-	LastActiveDate  *time.Time     `gorm:"column:last_active_date" json:"last_active_date"`
 	CreatedAt       time.Time      `gorm:"type:timestamp" json:"created_at"`
 	UpdatedAt       time.Time      `gorm:"type:timestamp" json:"updated_at"`
 	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`

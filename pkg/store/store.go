@@ -42,3 +42,8 @@ func Init(config *Config) error {
 func GetDB() *gorm.DB {
 	return DB
 }
+
+// SetDB 设置数据库连接（仅用于测试）
+func SetDB(db *gorm.DB) {
+	DB = db
+}

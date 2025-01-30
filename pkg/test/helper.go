@@ -1,8 +1,8 @@
 package test
 
 import (
-	"LVerity/pkg/database"
 	"LVerity/pkg/model"
+	"LVerity/pkg/store"
 	"LVerity/pkg/utils"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -59,7 +59,7 @@ func setupTest(t *testing.T) func() {
 	}
 
 	// 设置全局数据库连接
-	database.DB = db
+	store.SetDB(db)
 
 	// 初始化加密密钥
 	utils.InitEncryptionKey("test-key")

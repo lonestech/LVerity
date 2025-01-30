@@ -392,15 +392,112 @@ func ListDevices(page string, pageSize string, filters ...string) ([]model.Devic
 
 // UpdateDevice 更新设备
 func UpdateDevice(deviceID string, updates map[string]interface{}) error {
-	// 验证设备是否存在
-	if err := store.GetDB().Where("id = ?", deviceID).First(&model.Device{}).Error; err != nil {
+	result := store.GetDB().Model(&model.Device{}).Where("id = ?", deviceID).Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("device not found")
+	}
+	return nil
+}
+
+// GetAllDevices 获取所有设备
+func GetAllDevices() ([]model.Device, error) {
+	var devices []model.Device
+	if err := store.GetDB().Find(&devices).Error; err != nil {
+		return nil, err
+	}
+	return devices, nil
+}
+
+// UpdateDeviceRiskLevel 更新设备风险等级
+func UpdateDeviceRiskLevel(deviceID string, riskLevel float64) error {
+	result := store.GetDB().Model(&model.Device{}).
+		Where("id = ?", deviceID).
+		Update("risk_level", riskLevel)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("device not found")
+	}
+	return nil
+}
+
+// UpdateDeviceStats 更新设备使用统计
+func UpdateDeviceStats(deviceID string, stats *model.UsageStats) error {
+	// 将 UsageStats 转换为数据库字段
+	updates := map[string]interface{}{
+		"last_active_date":    stats.LastActiveDate,
+		"average_usage_time":  stats.AverageUsageTime,
+		"peak_usage_time":     stats.PeakUsageTime,
+	}
+
+	result := store.GetDB().Model(&model.Device{}).
+		Where("id = ?", deviceID).
+		Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("device not found")
+	}
+	return nil
+}
+
+// GetDeviceAbnormalBehaviors 获取设备异常行为记录
+func GetDeviceAbnormalBehaviors(deviceID string) ([]model.AbnormalBehavior, error) {
+	var behaviors []model.AbnormalBehavior
+	if err := store.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
+		return nil, err
+	}
+	return behaviors, nil
+}
+
+// RecordAbnormalBehavior 记录异常行为
+func RecordAbnormalBehavior(deviceID, behaviorType, description, level string, data map[string]interface{}) error {
+	// 序列化数据
+	dataJSON, err := json.Marshal(data)
+	if err != nil {
 		return err
 	}
-    
-	// 更新设备信息
-	if err := store.GetDB().Model(&model.Device{}).Where("id = ?", deviceID).Updates(updates).Error; err != nil {
+
+	behavior := &model.AbnormalBehavior{
+		ID:          utils.GenerateUUID(),
+		DeviceID:    deviceID,
+		Type:        behaviorType,
+		Description: description,
+		Level:       level,
+		Data:        string(dataJSON),
+		CreatedAt:   time.Now(),
+	}
+
+	if err := store.GetDB().Create(behavior).Error; err != nil {
 		return err
 	}
-    
+
+	return nil
+}
+
+// BlockDeviceWithReason 禁用设备并记录原因
+func BlockDeviceWithReason(deviceID string, reason string) error {
+	now := time.Now()
+	updates := map[string]interface{}{
+		"status":       model.DeviceStatusBlocked,
+		"block_reason": reason,
+		"block_time":   now,
+		"updated_at":   now,
+	}
+
+	result := store.GetDB().Model(&model.Device{}).
+		Where("id = ?", deviceID).
+		Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("device not found")
+	}
 	return nil
 }
