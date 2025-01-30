@@ -23,7 +23,6 @@ const LoginMessage: React.FC<{
 
 const Login: React.FC = () => {
   const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
-  const [type] = useState<string>('account');
   const { initialState, setInitialState } = useModel('@@initialState');
   const [captchaImage, setCaptchaImage] = useState<string>('');
   const [captchaId, setCaptchaId] = useState<string>('');
@@ -40,6 +39,21 @@ const Login: React.FC = () => {
     }
   };
 
+  const refreshCaptcha = async () => {
+    try {
+      const response = await fetch('/api/auth/captcha');
+      const data = await response.json();
+      if (data.success) {
+        setCaptchaImage(data.data.captcha_image);
+        setCaptchaId(data.data.captcha_id);
+      } else {
+        message.error('获取验证码失败');
+      }
+    } catch (error) {
+      message.error('获取验证码失败');
+    }
+  };
+
   const handleSubmit = async (values: API.LoginParams) => {
     try {
       // 登录
@@ -47,7 +61,7 @@ const Login: React.FC = () => {
         username: values.username,
         password: values.password,
         captcha: values.captcha,
-        captchaId: captchaId,
+        captcha_id: captchaId,
       });
       
       if (response.success) {
@@ -81,24 +95,12 @@ const Login: React.FC = () => {
     }
   };
 
-  const refreshCaptcha = async () => {
-    try {
-      const response = await fetch('/api/auth/captcha');
-      const data = await response.json();
-      if (data.success) {
-        setCaptchaImage(data.data.captcha_image);
-        setCaptchaId(data.data.captcha_id);
-      }
-    } catch (error) {
-      message.error('获取验证码失败');
-    }
-  };
-
+  // 首次加载时获取验证码
   useEffect(() => {
     refreshCaptcha();
   }, []);
 
-  const { status, type: loginType } = userLoginState;
+  const { status } = userLoginState;
 
   return (
     <div className={styles.container}>
@@ -114,7 +116,7 @@ const Login: React.FC = () => {
             await handleSubmit(values as API.LoginParams);
           }}
         >
-          {status === 'error' && loginType === 'account' && (
+          {status === 'error' && (
             <LoginMessage
               content={intl.formatMessage({
                 id: 'pages.login.accountLogin.errorMessage',
@@ -122,78 +124,73 @@ const Login: React.FC = () => {
               })}
             />
           )}
-          {type === 'account' && (
-            <>
-              <ProFormText
-                name="username"
-                fieldProps={{
-                  size: 'large',
-                  prefix: <UserOutlined className={styles.prefixIcon} />,
-                }}
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.username.placeholder',
-                  defaultMessage: '用户名',
-                })}
-                rules={[
-                  {
-                    required: true,
-                    message: intl.formatMessage({
-                      id: 'pages.login.username.required',
-                      defaultMessage: '请输入用户名!',
-                    }),
-                  },
-                ]}
-              />
-              <ProFormText.Password
-                name="password"
-                fieldProps={{
-                  size: 'large',
-                  prefix: <LockOutlined className={styles.prefixIcon} />,
-                }}
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.password.placeholder',
-                  defaultMessage: '密码',
-                })}
-                rules={[
-                  {
-                    required: true,
-                    message: intl.formatMessage({
-                      id: 'pages.login.password.required',
-                      defaultMessage: '请输入密码！',
-                    }),
-                  },
-                ]}
-              />
-              <div style={{ display: 'flex', marginBottom: 24 }}>
-                <ProFormText
-                  style={{ flex: 1, marginRight: 8 }}
-                  name="captcha"
-                  fieldProps={{
-                    size: 'large',
-                  }}
-                  placeholder={intl.formatMessage({
-                    id: 'pages.login.captcha.placeholder',
-                    defaultMessage: '请输入验证码',
-                  })}
-                  rules={[
-                    {
-                      required: true,
-                      message: intl.formatMessage({
-                        id: 'pages.login.captcha.required',
-                        defaultMessage: '请输入验证码！',
-                      }),
-                    },
-                  ]}
-                />
-                <img
-                  src={captchaImage}
-                  alt="验证码"
-                  style={{ height: 40, cursor: 'pointer' }}
-                  onClick={refreshCaptcha}
-                />
-              </div>
-            </>
-          )}
+          <ProFormText
+            name="username"
+            fieldProps={{
+              size: 'large',
+              prefix: <UserOutlined className={styles.prefixIcon} />,
+            }}
+            placeholder={intl.formatMessage({
+              id: 'pages.login.username.placeholder',
+              defaultMessage: '用户名',
+            })}
+            rules={[
+              {
+                required: true,
+                message: intl.formatMessage({
+                  id: 'pages.login.username.required',
+                  defaultMessage: '请输入用户名!',
+                }),
+              },
+            ]}
+          />
+          <ProFormText.Password
+            name="password"
+            fieldProps={{
+              size: 'large',
+              prefix: <LockOutlined className={styles.prefixIcon} />,
+            }}
+            placeholder={intl.formatMessage({
+              id: 'pages.login.password.placeholder',
+              defaultMessage: '密码',
+            })}
+            rules={[
+              {
+                required: true,
+                message: intl.formatMessage({
+                  id: 'pages.login.password.required',
+                  defaultMessage: '请输入密码！',
+                }),
+              },
+            ]}
+          />
+          <div style={{ display: 'flex', marginBottom: 24 }}>
+            <ProFormText
+              name="captcha"
+              fieldProps={{
+                size: 'large',
+              }}
+              placeholder={intl.formatMessage({
+                id: 'pages.login.captcha.placeholder',
+                defaultMessage: '请输入验证码',
+              })}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'pages.login.captcha.required',
+                    defaultMessage: '请输入验证码！',
+                  }),
+                },
+              ]}
+            />
+            <img
+              src={captchaImage}
+              alt="验证码"
+              style={{ height: 40, marginLeft: 8, cursor: 'pointer' }}
+              onClick={refreshCaptcha}
+            />
+          </div>
           <div
             style={{
               marginBottom: 24,
@@ -202,14 +199,6 @@ const Login: React.FC = () => {
             <ProFormCheckbox noStyle name="autoLogin">
               自动登录
             </ProFormCheckbox>
-            <a
-              style={{
-                float: 'right',
-              }}
-              href="/user/forgot-password"
-            >
-              忘记密码
-            </a>
           </div>
         </LoginForm>
       </div>
