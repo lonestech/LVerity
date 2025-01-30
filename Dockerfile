@@ -23,7 +23,7 @@ RUN CGO_ENABLED=1 GOOS=linux go build -a -o main ./pkg/main.go
 FROM alpine:latest
 
 # 安装必要的运行时依赖
-RUN apk add --no-cache ca-certificates tzdata ttf-dejavu fontconfig
+RUN apk add --no-cache ca-certificates tzdata
 
 # 设置时区
 ENV TZ=Asia/Shanghai
@@ -34,9 +34,6 @@ WORKDIR /app
 COPY --from=builder /app/main .
 COPY --from=builder /app/config.yaml ./
 COPY --from=builder /app/scripts ./scripts
-
-# 更新字体缓存
-RUN fc-cache -f -v
 
 # 暴露端口
 EXPOSE 8080

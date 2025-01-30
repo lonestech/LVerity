@@ -1,33 +1,30 @@
 package service
 
 import (
-	"github.com/mojocn/base64Captcha"
-	"image/color"
+	"bytes"
+	"encoding/base64"
+	"github.com/dchest/captcha"
+	"image/png"
 )
-
-var store = base64Captcha.DefaultMemStore
-
-// 验证码配置
-var captchaConfig = base64Captcha.DriverString{
-	Height:          40,
-	Width:          130,
-	NoiseCount:     0,
-	ShowLineOptions: 2 | 4,
-	Length:         4,
-	Source:         "1234567890",
-	BgColor:        &color.RGBA{R: 255, G: 255, B: 255, A: 255},
-	Fonts:          []string{"DejaVuSans"},
-}
 
 // GenerateCaptcha 生成验证码
 func GenerateCaptcha() (string, string, error) {
-	driver := captchaConfig.ConvertFonts()
-	c := base64Captcha.NewCaptcha(driver, store)
-	id, b64s, err := c.Generate()
-	return id, b64s, err
+	// 生成验证码ID
+	id := captcha.New()
+
+	// 生成图片
+	var buf bytes.Buffer
+	err := png.Encode(&buf, captcha.NewImage(id, captcha.DefaultLen, captcha.StdWidth, captcha.StdHeight))
+	if err != nil {
+		return "", "", err
+	}
+
+	// 转换为base64
+	b64s := base64.StdEncoding.EncodeToString(buf.Bytes())
+	return id, "data:image/png;base64," + b64s, nil
 }
 
 // VerifyCaptcha 验证验证码
 func VerifyCaptcha(id string, answer string) bool {
-	return store.Verify(id, answer, true)
+	return captcha.VerifyString(id, answer)
 }
