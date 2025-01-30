@@ -32,6 +32,7 @@ func GenerateLicense(licenseType model.LicenseType, maxDevices int, startTime, e
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 		GroupID:     groupID,
+		Features:    features,
 		FeaturesStr: string(featuresJSON),
 		UsageLimit:  usageLimit,
 		UsageCount:  0,
@@ -49,6 +50,13 @@ func VerifyLicense(code string) (bool, error) {
 	var license model.License
 	if err := store.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
 		return false, fmt.Errorf("failed to get license: %v", err)
+	}
+
+	// 处理 Features 字段
+	if license.FeaturesStr != "" {
+		if err := json.Unmarshal([]byte(license.FeaturesStr), &license.Features); err != nil {
+			return false, fmt.Errorf("failed to unmarshal features: %v", err)
+		}
 	}
 
 	// 检查授权状态
@@ -78,6 +86,13 @@ func ActivateLicense(code string, deviceID string) error {
 	var license model.License
 	if err := store.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
 		return fmt.Errorf("failed to get license: %v", err)
+	}
+
+	// 处理 Features 字段
+	if license.FeaturesStr != "" {
+		if err := json.Unmarshal([]byte(license.FeaturesStr), &license.Features); err != nil {
+			return fmt.Errorf("failed to unmarshal features: %v", err)
+		}
 	}
 
 	// 检查授权状态
@@ -146,6 +161,7 @@ func BatchCreateLicense(count int, licenseType model.LicenseType, maxDevices int
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 			GroupID:     groupID,
+			Features:    features,
 			FeaturesStr: string(featuresJSON),
 			UsageLimit:  usageLimit,
 			UsageCount:  0,
@@ -178,6 +194,15 @@ func QueryLicenses(status model.LicenseStatus, startTime, endTime time.Time) ([]
 
 	if err := query.Find(&licenses).Error; err != nil {
 		return nil, fmt.Errorf("failed to query licenses: %v", err)
+	}
+
+	// 处理 Features 字段
+	for i := range licenses {
+		if licenses[i].FeaturesStr != "" {
+			if err := json.Unmarshal([]byte(licenses[i].FeaturesStr), &licenses[i].Features); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal features: %v", err)
+			}
+		}
 	}
 
 	return licenses, nil
@@ -300,8 +325,16 @@ func DisableLicense(code string) error {
 func GetLicenseInfo(code string) (*model.License, error) {
 	var license model.License
 	if err := store.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
-		return nil, fmt.Errorf("failed to get license: %v", err)
+		return nil, err
 	}
+
+	// 处理 Features 字段
+	if license.FeaturesStr != "" {
+		if err := json.Unmarshal([]byte(license.FeaturesStr), &license.Features); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal features: %v", err)
+		}
+	}
+
 	return &license, nil
 }
 
@@ -335,6 +368,16 @@ func BatchGetLicenseInfo(codes []string) ([]*model.License, error) {
 	if err := store.GetDB().Where("code IN ?", codes).Find(&licenses).Error; err != nil {
 		return nil, fmt.Errorf("failed to get licenses: %v", err)
 	}
+
+	// 处理 Features 字段
+	for i := range licenses {
+		if licenses[i].FeaturesStr != "" {
+			if err := json.Unmarshal([]byte(licenses[i].FeaturesStr), &licenses[i].Features); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal features: %v", err)
+			}
+		}
+	}
+
 	return licenses, nil
 }
 
@@ -457,33 +500,16 @@ func ListLicenses(page string, pageSize string, status string, groupID string) (
 		return nil, 0, err
 	}
     
+	// 处理 Features 字段
+	for i := range licenses {
+		if licenses[i].FeaturesStr != "" {
+			if err := json.Unmarshal([]byte(licenses[i].FeaturesStr), &licenses[i].Features); err != nil {
+				return nil, 0, fmt.Errorf("failed to unmarshal features: %v", err)
+			}
+		}
+	}
+    
 	return licenses, total, nil
-}
-
-// GenerateLicense 生成授权码
-func GenerateLicense(licenseType model.LicenseType, maxDevices int, startTime time.Time, endTime time.Time, groupID string, features []string, usageLimit int64) (*model.License, error) {
-	// 生成授权码
-	code := utils.GenerateUUID()
-    
-	license := &model.License{
-		Code:       code,
-		Type:       licenseType,
-		Status:     model.LicenseStatusNormal,
-		MaxDevices: maxDevices,
-		StartTime:  startTime,
-		EndTime:    endTime,
-		GroupID:    groupID,
-		Features:   features,
-		UsageLimit: usageLimit,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
-	}
-    
-	if err := store.GetDB().Create(license).Error; err != nil {
-		return nil, err
-	}
-    
-	return license, nil
 }
 
 // GetLicenseByCode 根据授权码获取授权信息
@@ -492,6 +518,14 @@ func GetLicenseByCode(code string) (*model.License, error) {
 	if err := store.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
 		return nil, err
 	}
+
+	// 处理 Features 字段
+	if license.FeaturesStr != "" {
+		if err := json.Unmarshal([]byte(license.FeaturesStr), &license.Features); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal features: %v", err)
+		}
+	}
+
 	return &license, nil
 }
 
