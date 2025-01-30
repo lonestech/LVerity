@@ -41,7 +41,7 @@ const Login: React.FC = () => {
 
   const refreshCaptcha = async () => {
     try {
-      const response = await fetch('/api/auth/captcha');
+      const response = await fetch('/auth/captcha');
       const data = await response.json();
       if (data.success) {
         setCaptchaImage(data.data.captcha_image);

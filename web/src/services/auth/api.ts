@@ -1,8 +1,8 @@
 import { request } from '@umijs/max';
 
-/** 登录接口 POST /api/auth/login */
+/** 登录接口 POST /auth/login */
 export async function login(body: API.LoginParams) {
-  return request<API.LoginResult>('/api/auth/login', {
+  return request<API.LoginResult>('/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -11,16 +11,23 @@ export async function login(body: API.LoginParams) {
   });
 }
 
-/** 获取当前用户 GET /api/user/profile */
+/** 获取当前用户 GET /user/profile */
 export async function getCurrentUser() {
-  return request<API.CurrentUser>('/api/user/profile', {
+  return request<{
+    success: boolean;
+    data: API.CurrentUser;
+    error_message?: string;
+  }>('/user/profile', {
     method: 'GET',
   });
 }
 
-/** 退出登录接口 POST /api/auth/logout */
+/** 退出登录接口 POST /auth/logout */
 export async function logout() {
-  return request<Record<string, any>>('/api/auth/logout', {
+  return request<{
+    success: boolean;
+    error_message?: string;
+  }>('/auth/logout', {
     method: 'POST',
   });
 }
