@@ -11,7 +11,7 @@ RUN apk add --no-cache gcc musl-dev
 COPY go.mod go.sum ./
 
 # 下载依赖
-RUN go mod download
+RUN go mod download && go get github.com/mojocn/base64Captcha
 
 # 复制源代码
 COPY . .
