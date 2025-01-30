@@ -7,15 +7,21 @@ import (
 	"image/png"
 )
 
+const (
+	captchaWidth  = 240
+	captchaHeight = 80
+	captchaLength = 6
+)
+
 // GenerateCaptcha 生成验证码
 func GenerateCaptcha() (string, string, error) {
 	// 生成验证码ID
-	id := captcha.New()
+	id := captcha.NewLen(captchaLength)
 
 	// 生成图片
 	var buf bytes.Buffer
-	err := png.Encode(&buf, captcha.NewImage(id, captcha.DefaultLen, captcha.StdWidth, captcha.StdHeight))
-	if err != nil {
+	img := captcha.NewImage(id, captcha.RandomDigits(captchaLength), captchaWidth, captchaHeight)
+	if err := png.Encode(&buf, img); err != nil {
 		return "", "", err
 	}
 
