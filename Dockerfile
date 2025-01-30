@@ -7,11 +7,14 @@ WORKDIR /app
 # 安装依赖
 RUN apk add --no-cache gcc musl-dev git
 
+# 设置 GOPROXY
+ENV GOPROXY=https://goproxy.cn,direct
+
 # 复制 go.mod 和 go.sum
 COPY go.mod go.sum ./
 
-# 下载依赖
-RUN go mod download
+# 下载依赖并更新 go.sum
+RUN go mod download && go mod tidy
 
 # 复制源代码
 COPY . .
