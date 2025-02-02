@@ -2,6 +2,7 @@ package model
 
 import (
 	"time"
+
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -20,12 +21,14 @@ type User struct {
 	ID         string     `json:"id" gorm:"primaryKey"`
 	Username   string     `json:"username" gorm:"uniqueIndex:idx_username,length:191;type:varchar(191)"`
 	Password   string     `json:"-" gorm:"not null;type:varchar(191)"` // 密码不返回给前端
-	Salt       []byte     `json:"-"`           // 密码盐值
-	RoleID     string     `json:"role_id" gorm:"type:varchar(191)"`     // 关联角色ID
+	Salt       []byte     `json:"-"`                                   // 密码盐值
+	RoleID     string     `json:"role_id" gorm:"type:varchar(191)"`    // 关联角色ID
 	Status     UserStatus `json:"status" gorm:"type:varchar(20)"`      // true: 启用, false: 禁用
 	LastLogin  time.Time  `json:"last_login"`
 	CreateTime time.Time  `json:"create_time"`
 	UpdateTime time.Time  `json:"update_time"`
+	MFASecret  string     `json:"mfa_secret" gorm:"type:varchar(255)"`
+	MFAEnabled bool       `json:"mfa_enabled" gorm:"default:false"`
 }
 
 // SetPassword 设置密码

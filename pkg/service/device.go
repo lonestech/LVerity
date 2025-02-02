@@ -1,8 +1,8 @@
 package service
 
 import (
+	"LVerity/pkg/database"
 	"LVerity/pkg/model"
-	"LVerity/pkg/store"
 	"LVerity/pkg/utils"
 	"encoding/json"
 	"errors"
@@ -12,7 +12,7 @@ import (
 // RegisterDevice 注册设备
 func RegisterDevice(diskID, bios, motherboard, name string) (*model.Device, error) {
 	// 检查设备是否已存在
-	if err := store.GetDB().Where("disk_id = ? AND bios = ? AND motherboard = ?", diskID, bios, motherboard).First(&model.Device{}).Error; err == nil {
+	if err := database.GetDB().Where("disk_id = ? AND bios = ? AND motherboard = ?", diskID, bios, motherboard).First(&model.Device{}).Error; err == nil {
 		return nil, errors.New("device already exists")
 	}
 
@@ -28,7 +28,7 @@ func RegisterDevice(diskID, bios, motherboard, name string) (*model.Device, erro
 		UpdatedAt:   time.Now(),
 	}
 
-	if err := store.GetDB().Create(device).Error; err != nil {
+	if err := database.GetDB().Create(device).Error; err != nil {
 		return nil, err
 	}
 
@@ -38,7 +38,7 @@ func RegisterDevice(diskID, bios, motherboard, name string) (*model.Device, erro
 // GetDevice 获取设备信息
 func GetDevice(deviceID string) (*model.Device, error) {
 	var device model.Device
-	if err := store.GetDB().Where("id = ?", deviceID).First(&device).Error; err != nil {
+	if err := database.GetDB().Where("id = ?", deviceID).First(&device).Error; err != nil {
 		return nil, err
 	}
 	return &device, nil
@@ -47,7 +47,7 @@ func GetDevice(deviceID string) (*model.Device, error) {
 // GetDeviceByHardwareInfo 根据硬件信息获取设备
 func GetDeviceByHardwareInfo(diskID, bios, motherboard string) (*model.Device, error) {
 	var device model.Device
-	if err := store.GetDB().Where("disk_id = ? AND bios = ? AND motherboard = ?", diskID, bios, motherboard).First(&device).Error; err != nil {
+	if err := database.GetDB().Where("disk_id = ? AND bios = ? AND motherboard = ?", diskID, bios, motherboard).First(&device).Error; err != nil {
 		return nil, err
 	}
 	return &device, nil
@@ -56,12 +56,12 @@ func GetDeviceByHardwareInfo(diskID, bios, motherboard string) (*model.Device, e
 // UpdateDeviceInfo 更新设备信息
 func UpdateDeviceInfo(deviceID string, updateData map[string]interface{}) error {
 	// 验证设备是否存在
-	if err := store.GetDB().Where("id = ?", deviceID).First(&model.Device{}).Error; err != nil {
+	if err := database.GetDB().Where("id = ?", deviceID).First(&model.Device{}).Error; err != nil {
 		return err
 	}
 
 	// 更新设备信息
-	if err := store.GetDB().Model(&model.Device{}).
+	if err := database.GetDB().Model(&model.Device{}).
 		Where("id = ?", deviceID).
 		Updates(updateData).Error; err != nil {
 		return err
@@ -72,7 +72,7 @@ func UpdateDeviceInfo(deviceID string, updateData map[string]interface{}) error 
 
 // DeleteDevice 删除设备
 func DeleteDevice(deviceID string) error {
-	if err := store.GetDB().Delete(&model.Device{}, "id = ?", deviceID).Error; err != nil {
+	if err := database.GetDB().Delete(&model.Device{}, "id = ?", deviceID).Error; err != nil {
 		return err
 	}
 	return nil
@@ -90,7 +90,7 @@ func BlockDevice(deviceID string) error {
 	device.BlockTime = &now
 	device.UpdatedAt = now
 
-	if err := store.GetDB().Save(device).Error; err != nil {
+	if err := database.GetDB().Save(device).Error; err != nil {
 		return err
 	}
 
@@ -109,7 +109,7 @@ func UnblockDevice(deviceID string) error {
 	device.BlockReason = ""
 	device.UpdatedAt = time.Now()
 
-	if err := store.GetDB().Save(device).Error; err != nil {
+	if err := database.GetDB().Save(device).Error; err != nil {
 		return err
 	}
 
@@ -119,7 +119,7 @@ func UnblockDevice(deviceID string) error {
 // GetDevicesByStatus 获取指定状态的设备列表
 func GetDevicesByStatus(status string) ([]model.Device, error) {
 	var devices []model.Device
-	if err := store.GetDB().Where("status = ?", status).Find(&devices).Error; err != nil {
+	if err := database.GetDB().Where("status = ?", status).Find(&devices).Error; err != nil {
 		return nil, err
 	}
 	return devices, nil
@@ -128,7 +128,7 @@ func GetDevicesByStatus(status string) ([]model.Device, error) {
 // GetDeviceCount 获取设备数量
 func GetDeviceCount(status string) (int64, error) {
 	var count int64
-	query := store.GetDB().Model(&model.Device{})
+	query := database.GetDB().Model(&model.Device{})
 	if status != "" {
 		query = query.Where("status = ?", status)
 	}
@@ -141,7 +141,7 @@ func GetDeviceCount(status string) (int64, error) {
 // GetDevicesByTimeRange 获取指定时间范围内的设备
 func GetDevicesByTimeRange(startTime, endTime time.Time) ([]model.Device, error) {
 	var devices []model.Device
-	if err := store.GetDB().Where("created_at BETWEEN ? AND ?", startTime, endTime).Find(&devices).Error; err != nil {
+	if err := database.GetDB().Where("created_at BETWEEN ? AND ?", startTime, endTime).Find(&devices).Error; err != nil {
 		return nil, err
 	}
 	return devices, nil
@@ -165,7 +165,7 @@ func GetOfflineDevices() ([]model.Device, error) {
 // GetDevicesByGroup 获取组内设备
 func GetDevicesByGroup(groupID string) ([]model.Device, error) {
 	var devices []model.Device
-	if err := store.GetDB().Where("group_id = ?", groupID).Find(&devices).Error; err != nil {
+	if err := database.GetDB().Where("group_id = ?", groupID).Find(&devices).Error; err != nil {
 		return nil, err
 	}
 	return devices, nil
@@ -173,7 +173,7 @@ func GetDevicesByGroup(groupID string) ([]model.Device, error) {
 
 // AssignDeviceToGroup 分配设备到组
 func AssignDeviceToGroup(deviceID string, groupID string) error {
-	return store.GetDB().Model(&model.Device{}).Where("id = ?", deviceID).Update("group_id", groupID).Error
+	return database.GetDB().Model(&model.Device{}).Where("id = ?", deviceID).Update("group_id", groupID).Error
 }
 
 // UpdateDeviceHeartbeat 更新设备心跳
@@ -183,13 +183,13 @@ func UpdateDeviceHeartbeat(deviceID string) error {
 		"last_heartbeat": now,
 		"updated_at":     now,
 	}
-	return store.GetDB().Model(&model.Device{}).Where("id = ?", deviceID).Updates(updates).Error
+	return database.GetDB().Model(&model.Device{}).Where("id = ?", deviceID).Updates(updates).Error
 }
 
 // CheckOfflineDevices 检查离线设备
 func CheckOfflineDevices() error {
 	var devices []model.Device
-	if err := store.GetDB().Where("status = ?", model.DeviceStatusNormal).Find(&devices).Error; err != nil {
+	if err := database.GetDB().Where("status = ?", model.DeviceStatusNormal).Find(&devices).Error; err != nil {
 		return err
 	}
 
@@ -202,7 +202,7 @@ func CheckOfflineDevices() error {
 		if time.Since(*device.LastHeartbeat) > heartbeatTimeout {
 			device.Status = model.DeviceStatusOffline
 			device.UpdatedAt = time.Now()
-			if err := store.GetDB().Save(&device).Error; err != nil {
+			if err := database.GetDB().Save(&device).Error; err != nil {
 				return err
 			}
 		}
@@ -219,7 +219,7 @@ func GetDeviceInfo(deviceID string) (*model.Device, error) {
 	}
 
 	// 加载关联数据
-	if err := store.GetDB().Model(device).Association("Group").Find(&device.Group); err != nil {
+	if err := database.GetDB().Model(device).Association("Group").Find(&device.Group); err != nil {
 		return nil, err
 	}
 
@@ -241,7 +241,7 @@ func UpdateDeviceMetadata(deviceID string, metadata map[string]interface{}) erro
 	device.Metadata = string(metadataJSON)
 	device.UpdatedAt = time.Now()
 
-	return store.GetDB().Save(device).Error
+	return database.GetDB().Save(device).Error
 }
 
 // GetDeviceStats 获取设备统计信息
@@ -337,10 +337,10 @@ func CalculateDeviceRiskLevel(deviceID string) int {
 
 	// 告警检查
 	var alertCount int64
-	if err := store.GetDB().Model(&model.Alert{}).
-		Where("device_id = ? AND status = ? AND created_at > ?", 
-			deviceID, 
-			model.AlertStatusOpen, 
+	if err := database.GetDB().Model(&model.Alert{}).
+		Where("device_id = ? AND status = ? AND created_at > ?",
+			deviceID,
+			model.AlertStatusOpen,
 			time.Now().Add(-24*time.Hour)).
 		Count(&alertCount).Error; err == nil {
 		if alertCount > 10 {
@@ -366,33 +366,33 @@ func CalculateDeviceRiskLevel(deviceID string) int {
 func ListDevices(page string, pageSize string, filters ...string) ([]model.Device, int64, error) {
 	var devices []model.Device
 	var total int64
-    
+
 	offset, limit := utils.GetPagination(page, pageSize)
-	query := store.GetDB().Model(&model.Device{})
-    
+	query := database.GetDB().Model(&model.Device{})
+
 	// 应用过滤条件
 	for _, filter := range filters {
 		if filter != "" {
 			query = query.Where("status = ?", filter)
 		}
 	}
-    
+
 	// 获取总数
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-    
+
 	// 获取分页数据
 	if err := query.Offset(offset).Limit(limit).Find(&devices).Error; err != nil {
 		return nil, 0, err
 	}
-    
+
 	return devices, total, nil
 }
 
 // UpdateDevice 更新设备
 func UpdateDevice(deviceID string, updates map[string]interface{}) error {
-	result := store.GetDB().Model(&model.Device{}).Where("id = ?", deviceID).Updates(updates)
+	result := database.GetDB().Model(&model.Device{}).Where("id = ?", deviceID).Updates(updates)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -405,7 +405,7 @@ func UpdateDevice(deviceID string, updates map[string]interface{}) error {
 // GetAllDevices 获取所有设备
 func GetAllDevices() ([]model.Device, error) {
 	var devices []model.Device
-	if err := store.GetDB().Find(&devices).Error; err != nil {
+	if err := database.GetDB().Find(&devices).Error; err != nil {
 		return nil, err
 	}
 	return devices, nil
@@ -413,7 +413,7 @@ func GetAllDevices() ([]model.Device, error) {
 
 // UpdateDeviceRiskLevel 更新设备风险等级
 func UpdateDeviceRiskLevel(deviceID string, riskLevel float64) error {
-	result := store.GetDB().Model(&model.Device{}).
+	result := database.GetDB().Model(&model.Device{}).
 		Where("id = ?", deviceID).
 		Update("risk_level", riskLevel)
 	if result.Error != nil {
@@ -429,12 +429,12 @@ func UpdateDeviceRiskLevel(deviceID string, riskLevel float64) error {
 func UpdateDeviceStats(deviceID string, stats *model.UsageStats) error {
 	// 将 UsageStats 转换为数据库字段
 	updates := map[string]interface{}{
-		"last_active_date":    stats.LastActiveDate,
-		"average_usage_time":  stats.AverageUsageTime,
-		"peak_usage_time":     stats.PeakUsageTime,
+		"last_active_date":   stats.LastActiveDate,
+		"average_usage_time": stats.AverageUsageTime,
+		"peak_usage_time":    stats.PeakUsageTime,
 	}
 
-	result := store.GetDB().Model(&model.Device{}).
+	result := database.GetDB().Model(&model.Device{}).
 		Where("id = ?", deviceID).
 		Updates(updates)
 	if result.Error != nil {
@@ -449,7 +449,7 @@ func UpdateDeviceStats(deviceID string, stats *model.UsageStats) error {
 // GetDeviceAbnormalBehaviors 获取设备异常行为记录
 func GetDeviceAbnormalBehaviors(deviceID string) ([]model.AbnormalBehavior, error) {
 	var behaviors []model.AbnormalBehavior
-	if err := store.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
+	if err := database.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
 		return nil, err
 	}
 	return behaviors, nil
@@ -473,7 +473,7 @@ func RecordAbnormalBehavior(deviceID, behaviorType, description, level string, d
 		CreatedAt:   time.Now(),
 	}
 
-	if err := store.GetDB().Create(behavior).Error; err != nil {
+	if err := database.GetDB().Create(behavior).Error; err != nil {
 		return err
 	}
 
@@ -490,7 +490,7 @@ func BlockDeviceWithReason(deviceID string, reason string) error {
 		"updated_at":   now,
 	}
 
-	result := store.GetDB().Model(&model.Device{}).
+	result := database.GetDB().Model(&model.Device{}).
 		Where("id = ?", deviceID).
 		Updates(updates)
 	if result.Error != nil {

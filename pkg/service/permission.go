@@ -1,8 +1,8 @@
 package service
 
 import (
+	"LVerity/pkg/database"
 	"LVerity/pkg/model"
-	"LVerity/pkg/store"
 	"fmt"
 )
 
@@ -28,7 +28,7 @@ func InitDefaultPermissions() error {
 	}
 
 	// 开启事务
-	tx := store.GetDB().Begin()
+	tx := database.GetDB().Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()

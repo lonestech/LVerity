@@ -1,8 +1,8 @@
 package service
 
 import (
+	"LVerity/pkg/database"
 	"LVerity/pkg/model"
-	"LVerity/pkg/store"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -12,7 +12,7 @@ import (
 
 // ExportDeviceLogs 导出设备日志
 func ExportDeviceLogs(writer io.Writer, opts model.LogExportOptions) error {
-	query := store.GetDB().Model(&model.DeviceLog{}).
+	query := database.GetDB().Model(&model.DeviceLog{}).
 		Where("timestamp BETWEEN ? AND ?", opts.StartTime, opts.EndTime)
 
 	if opts.DeviceID != "" {
@@ -70,7 +70,7 @@ func exportLogsToCSV(writer io.Writer, logs []model.DeviceLog) error {
 
 // ExportDeviceLocationLogs 导出设备位置日志
 func ExportDeviceLocationLogs(writer io.Writer, opts model.LogExportOptions) error {
-	query := store.GetDB().Model(&model.DeviceLocationLog{}).
+	query := database.GetDB().Model(&model.DeviceLocationLog{}).
 		Where("timestamp BETWEEN ? AND ?", opts.StartTime, opts.EndTime)
 
 	if opts.DeviceID != "" {
@@ -127,7 +127,7 @@ func exportLocationLogsToCSV(writer io.Writer, logs []model.DeviceLocationLog) e
 
 // ExportAlerts 导出告警记录
 func ExportAlerts(writer io.Writer, opts model.LogExportOptions) error {
-	query := store.GetDB().Model(&model.Alert{}).
+	query := database.GetDB().Model(&model.Alert{}).
 		Where("created_at BETWEEN ? AND ?", opts.StartTime, opts.EndTime)
 
 	if opts.DeviceID != "" {

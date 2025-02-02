@@ -1,61 +1,40 @@
-import { get, post, put, del } from '@/utils/request';
+import { License, LicenseCreateRequest, LicenseUpdateRequest } from '../models/license';
+import api from './api';
 
-// 获取授权列表
-export async function getLicenseList(params: API.PageParams & Record<string, any>) {
-  return get<API.PageResult<API.License>>('/licenses', params);
-}
+export const licenseService = {
+  // 获取许可证列表
+  list: async (params: { current: number; pageSize: number; [key: string]: any }) => {
+    const { data } = await api.get('/licenses', { params });
+    return data;
+  },
 
-// 获取授权详情
-export async function getLicenseDetail(id: string) {
-  return get<API.License>(`/licenses/${id}`);
-}
+  // 获取单个许可证
+  get: async (id: number) => {
+    const { data } = await api.get(`/licenses/${id}`);
+    return data as License;
+  },
 
-// 创建授权
-export async function createLicense(data: Partial<API.License>) {
-  return post<API.License>('/licenses', data);
-}
+  // 创建许可证
+  create: async (license: LicenseCreateRequest) => {
+    const { data } = await api.post('/licenses', license);
+    return data as License;
+  },
 
-// 更新授权
-export async function updateLicense(id: string, data: Partial<API.License>) {
-  return put<API.License>(`/licenses/${id}`, data);
-}
+  // 更新许可证
+  update: async (id: number, license: LicenseUpdateRequest) => {
+    const { data } = await api.put(`/licenses/${id}`, license);
+    return data as License;
+  },
 
-// 删除授权
-export async function deleteLicense(id: string) {
-  return del(`/licenses/${id}`);
-}
+  // 吊销许可证
+  revoke: async (id: number) => {
+    const { data } = await api.post(`/licenses/${id}/revoke`);
+    return data as License;
+  },
 
-// 激活授权
-export async function activateLicense(id: string, deviceId: string) {
-  return post<API.License>(`/licenses/${id}/activate`, { device_id: deviceId });
-}
-
-// 停用授权
-export async function deactivateLicense(id: string) {
-  return post<API.License>(`/licenses/${id}/deactivate`);
-}
-
-// 续期授权
-export async function renewLicense(id: string, expiryDate: string) {
-  return post<API.License>(`/licenses/${id}/renew`, { expiry_date: expiryDate });
-}
-
-// 导出授权列表
-export async function exportLicenses(params: Record<string, any>) {
-  return get('/licenses/export', params);
-}
-
-// 导入授权列表
-export async function importLicenses(data: FormData) {
-  return post('/licenses/import', data);
-}
-
-// 获取授权统计信息
-export async function getLicenseStats() {
-  return get<{
-    total: number;
-    active: number;
-    expired: number;
-    inactive: number;
-  }>('/licenses/stats');
-}
+  // 验证许可证
+  verify: async (licenseKey: string) => {
+    const { data } = await api.post('/licenses/verify', { licenseKey });
+    return data;
+  },
+};

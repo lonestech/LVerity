@@ -1,41 +1,26 @@
-import { useState, useCallback } from 'react';
-import { getLicenseStats } from '@/services/license';
+export interface License {
+  id: number;
+  deviceId: number;
+  licenseKey: string;
+  type: 'trial' | 'standard' | 'enterprise';
+  status: 'active' | 'expired' | 'revoked';
+  startDate: string;
+  endDate: string;
+  features: string[];
+  createdAt: string;
+  updatedAt: string;
+}
 
-export default function useLicense() {
-  const [stats, setStats] = useState<{
-    total: number;
-    active: number;
-    expired: number;
-    inactive: number;
-  }>({
-    total: 0,
-    active: 0,
-    expired: 0,
-    inactive: 0,
-  });
+export interface LicenseCreateRequest {
+  deviceId: number;
+  type: 'trial' | 'standard' | 'enterprise';
+  startDate: string;
+  endDate: string;
+  features: string[];
+}
 
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const fetchStats = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await getLicenseStats();
-      if (response.success) {
-        setStats(response.data);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const updateStats = useCallback((newStats: typeof stats) => {
-    setStats(newStats);
-  }, []);
-
-  return {
-    stats,
-    loading,
-    fetchStats,
-    updateStats,
-  };
+export interface LicenseUpdateRequest {
+  status?: 'active' | 'expired' | 'revoked';
+  endDate?: string;
+  features?: string[];
 }

@@ -1,8 +1,8 @@
 package service
 
 import (
+	"LVerity/pkg/database"
 	"LVerity/pkg/model"
-	"LVerity/pkg/store"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -18,18 +18,18 @@ const (
 
 // GeoIPResponse IP地理位置信息响应
 type GeoIPResponse struct {
-	Status      string  `json:"status"`
-	Country     string  `json:"country"`
-	City        string  `json:"city"`
-	Lat         float64 `json:"lat"`
-	Lon         float64 `json:"lon"`
-	Message     string  `json:"message"`
+	Status  string  `json:"status"`
+	Country string  `json:"country"`
+	City    string  `json:"city"`
+	Lat     float64 `json:"lat"`
+	Lon     float64 `json:"lon"`
+	Message string  `json:"message"`
 }
 
 // GetLocationFromIP 从IP获取地理位置信息
 func GetLocationFromIP(ip string) (*model.Location, error) {
 	url := fmt.Sprintf(geoIPAPIEndpoint, ip)
-	
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func GetLocationFromIP(ip string) (*model.Location, error) {
 // UpdateDeviceLocation 更新设备位置信息
 func UpdateDeviceLocation(log *model.DeviceLocationLog) error {
 	log.Timestamp = time.Now()
-	return store.GetDB().Create(log).Error
+	return database.GetDB().Create(log).Error
 }
 
 // GetNearbyDevices 获取附近的设备
@@ -77,7 +77,7 @@ func GetNearbyDevices(lat, lon, radius float64) ([]model.Device, error) {
 
 	// 查询最后一次位置在范围内的设备
 	var devices []model.Device
-	err := store.GetDB().
+	err := database.GetDB().
 		Table("devices").
 		Joins("JOIN device_location_logs ON devices.id = device_location_logs.device_id").
 		Where("device_location_logs.latitude BETWEEN ? AND ?", minLat, maxLat).
@@ -109,7 +109,7 @@ func GetNearbyDevices(lat, lon, radius float64) ([]model.Device, error) {
 // GetDeviceLocation 获取设备位置信息
 func GetDeviceLocation(deviceID string) (*model.DeviceLocationLog, error) {
 	var log model.DeviceLocationLog
-	err := store.GetDB().
+	err := database.GetDB().
 		Where("device_id = ?", deviceID).
 		Order("timestamp DESC").
 		First(&log).Error

@@ -1,16 +1,17 @@
 package service
 
 import (
+	"LVerity/pkg/database"
 	"LVerity/pkg/model"
-	"LVerity/pkg/store"
-	"gorm.io/gorm"
 	"sync"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 const (
 	deviceOfflineThreshold = 30 * time.Minute
-	deviceCleanupInterval = 1 * time.Hour
+	deviceCleanupInterval  = 1 * time.Hour
 )
 
 var (
@@ -101,7 +102,7 @@ func (dm *DeviceMonitor) UpdateDeviceHeartbeat(deviceID, ip string, location *mo
 	}
 
 	// 更新设备状态
-	if err := store.GetDB().Model(&model.Device{}).
+	if err := database.GetDB().Model(&model.Device{}).
 		Where("id = ?", deviceID).
 		Updates(updates).Error; err != nil {
 		return err
@@ -127,13 +128,13 @@ func (dm *DeviceMonitor) CleanupOfflineDevices() {
 
 	// 查找所有长时间未活动的设备
 	var devices []model.Device
-	if err := store.GetDB().Where("last_seen < ? AND status = ?", offlineTime, model.DeviceStatusNormal).Find(&devices).Error; err != nil {
+	if err := database.GetDB().Where("last_seen < ? AND status = ?", offlineTime, model.DeviceStatusNormal).Find(&devices).Error; err != nil {
 		return
 	}
 
 	// 更新设备状态为离线
 	for _, device := range devices {
-		if err := store.GetDB().Model(&device).Updates(map[string]interface{}{
+		if err := database.GetDB().Model(&device).Updates(map[string]interface{}{
 			"status":     model.DeviceStatusOffline,
 			"updated_at": time.Now(),
 		}).Error; err != nil {
@@ -159,17 +160,17 @@ func NewDeviceSession(deviceID string) *DeviceSession {
 // End 结束会话并更新设备使用统计
 func (s *DeviceSession) End(deviceID string) int64 {
 	duration := time.Since(s.StartTime).Seconds()
-	
+
 	// 更新设备使用统计
 	now := time.Now()
 	updates := map[string]interface{}{
-		"avg_usage_time": gorm.Expr("(avg_usage_time * alert_count + ?) / (alert_count + 1)", duration),
-		"alert_count":    gorm.Expr("alert_count + 1"),
+		"avg_usage_time":   gorm.Expr("(avg_usage_time * alert_count + ?) / (alert_count + 1)", duration),
+		"alert_count":      gorm.Expr("alert_count + 1"),
 		"last_active_date": now,
-		"updated_at":     now,
+		"updated_at":       now,
 	}
 
-	if err := store.GetDB().Model(&model.Device{}).
+	if err := database.GetDB().Model(&model.Device{}).
 		Where("id = ?", deviceID).
 		Updates(updates).Error; err != nil {
 		return 0

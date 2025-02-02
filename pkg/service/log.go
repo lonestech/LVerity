@@ -1,10 +1,11 @@
 package service
 
 import (
+	"LVerity/pkg/database"
+	"LVerity/pkg/model"
 	"encoding/json"
 	"time"
-	"LVerity/pkg/model"
-	"LVerity/pkg/store"
+
 	"github.com/google/uuid"
 )
 
@@ -30,7 +31,7 @@ func LogOperation(userID, username, action, resource, resourceID string, detail 
 		CreatedAt:  time.Now(),
 	}
 
-	return store.GetDB().Create(log).Error
+	return database.GetDB().Create(log).Error
 }
 
 // LogSystem 记录系统日志
@@ -53,7 +54,7 @@ func LogSystem(level model.LogLevel, module, message string, detail interface{})
 		CreatedAt: time.Now(),
 	}
 
-	return store.GetDB().Create(log).Error
+	return database.GetDB().Create(log).Error
 }
 
 // GetOperationLogs 获取操作日志
@@ -61,7 +62,7 @@ func GetOperationLogs(userID string, startTime, endTime time.Time, page, pageSiz
 	var logs []model.OperationLog
 	var total int64
 
-	query := store.GetDB().Model(&model.OperationLog{})
+	query := database.GetDB().Model(&model.OperationLog{})
 	if userID != "" {
 		query = query.Where("user_id = ?", userID)
 	}
@@ -84,7 +85,7 @@ func GetSystemLogs(level model.LogLevel, module string, startTime, endTime time.
 	var logs []model.SystemLog
 	var total int64
 
-	query := store.GetDB().Model(&model.SystemLog{})
+	query := database.GetDB().Model(&model.SystemLog{})
 	if level != "" {
 		query = query.Where("level = ?", level)
 	}

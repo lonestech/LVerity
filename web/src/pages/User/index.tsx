@@ -1,101 +1,149 @@
 import { PlusOutlined } from '@ant-design/icons';
-import {
-  ActionType,
-  FooterToolbar,
-  PageContainer,
-  ProDescriptions,
-  ProTable,
-} from '@ant-design/pro-components';
-import { Button, Drawer, message, Popconfirm } from 'antd';
-import React, { useRef, useState } from 'react';
-import { getUserList, deleteUser } from '@/services/user';
-import UserForm from './components/UserForm';
-import { Access, useAccess } from '@umijs/max';
+import { ActionType, PageContainer, ProTable } from '@ant-design/pro-components';
+import { Button, Form, Input, Modal, Select, message } from 'antd';
+import { useRef, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import StatusTag from '@/components/StatusTag';
+import { User, UserCreateRequest, UserUpdateRequest } from '@/models/user';
+import { userService } from '@/services/user';
+import ConfirmModal from '@/components/ConfirmModal';
 
-const UserPage: React.FC = () => {
-  const [createModalVisible, handleModalVisible] = useState<boolean>(false);
-  const [showDetail, setShowDetail] = useState<boolean>(false);
+export default function UserPage() {
+  const [form] = Form.useForm();
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<API.User>();
-  const [selectedRowsState, setSelectedRows] = useState<API.User[]>([]);
-  const access = useAccess();
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
+  const queryClient = useQueryClient();
+
+  // 创建用户
+  const createMutation = useMutation({
+    mutationFn: (data: UserCreateRequest) => userService.create(data),
+    onSuccess: () => {
+      message.success('用户创建成功');
+      setCreateModalVisible(false);
+      form.resetFields();
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+
+  // 更新用户
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UserUpdateRequest }) => 
+      userService.update(id, data),
+    onSuccess: () => {
+      message.success('用户更新成功');
+      setCreateModalVisible(false);
+      setEditingUser(null);
+      form.resetFields();
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+
+  // 删除用户
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => userService.delete(id),
+    onSuccess: () => {
+      message.success('用户删除成功');
+      setDeleteModalVisible(false);
+      setSelectedUser(null);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+
+  // 处理表单提交
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      if (editingUser) {
+        await updateMutation.mutateAsync({ id: editingUser.id, data: values });
+      } else {
+        await createMutation.mutateAsync(values);
+      }
+    } catch (error: any) {
+      message.error(error.message || '操作失败');
+    }
+  };
+
+  // 处理删除用户
+  const handleDelete = async () => {
+    if (!selectedUser) return;
+    try {
+      await deleteMutation.mutateAsync(selectedUser.id);
+    } catch (error: any) {
+      message.error(error.message || '删除失败');
+    }
+  };
 
   const columns = [
     {
       title: '用户名',
       dataIndex: 'username',
-      render: (dom: any, entity: API.User) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
-      },
+      width: 200,
+    },
+    {
+      title: '邮箱',
+      dataIndex: 'email',
+      width: 250,
     },
     {
       title: '角色',
-      dataIndex: 'role_id',
+      dataIndex: 'role',
+      width: 150,
       valueEnum: {
-        admin: { text: '管理员', status: 'Success' },
-        operator: { text: '操作员', status: 'Processing' },
-        viewer: { text: '访客', status: 'Default' },
+        admin: { text: '管理员' },
+        user: { text: '普通用户' },
       },
     },
     {
       title: '状态',
       dataIndex: 'status',
-      valueEnum: {
-        active: { text: '正常', status: 'Success' },
-        inactive: { text: '禁用', status: 'Default' },
-        locked: { text: '锁定', status: 'Error' },
-      },
+      width: 100,
+      render: (status: string) => <StatusTag status={status} type="user" />,
     },
     {
       title: '创建时间',
-      dataIndex: 'created_at',
-      search: false,
+      dataIndex: 'createdAt',
+      width: 200,
     },
     {
       title: '操作',
-      dataIndex: 'option',
+      width: 180,
       valueType: 'option',
-      render: (_: any, record: API.User) => [
-        <Access key="edit" accessible={access.canManageUser}>
-          <a
-            key="edit"
-            onClick={() => {
-              setCurrentRow(record);
-              handleModalVisible(true);
-            }}
-          >
-            编辑
-          </a>
-        </Access>,
-        <Access key="delete" accessible={access.canManageUser}>
-          <Popconfirm
+      render: (_: any, record: User) => [
+        <Button
+          key="edit"
+          type="link"
+          onClick={() => {
+            setEditingUser(record);
+            form.setFieldsValue(record);
+            setCreateModalVisible(true);
+          }}
+        >
+          编辑
+        </Button>,
+        record.role !== 'admin' && (
+          <Button
             key="delete"
-            title="确定要删除这个用户吗？"
-            onConfirm={async () => {
-              await deleteUser(record.id);
-              message.success('删除成功');
-              actionRef.current?.reload();
+            type="link"
+            danger
+            onClick={() => {
+              setSelectedUser(record);
+              setDeleteModalVisible(true);
             }}
           >
-            <a>删除</a>
-          </Popconfirm>
-        </Access>,
+            删除
+          </Button>
+        ),
       ],
     },
   ];
 
   return (
     <PageContainer>
-      <ProTable<API.User>
+      <ProTable<User>
         headerTitle="用户列表"
         actionRef={actionRef}
         rowKey="id"
@@ -103,87 +151,115 @@ const UserPage: React.FC = () => {
           labelWidth: 120,
         }}
         toolBarRender={() => [
-          <Access accessible={access.canManageUser}>
-            <Button
-              type="primary"
-              key="primary"
-              onClick={() => {
-                setCurrentRow(undefined);
-                handleModalVisible(true);
-              }}
-            >
-              <PlusOutlined /> 新建
-            </Button>
-          </Access>,
-        ]}
-        request={getUserList}
-        columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
-      />
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              已选择 <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a> 项
-            </div>
-          }
-        >
-          <Access accessible={access.canManageUser}>
-            <Popconfirm
-              title="确定要批量删除吗？"
-              onConfirm={async () => {
-                await Promise.all(
-                  selectedRowsState.map((record) => deleteUser(record.id))
-                );
-                setSelectedRows([]);
-                actionRef.current?.reload();
-                message.success('删除成功');
-              }}
-            >
-              <Button>批量删除</Button>
-            </Popconfirm>
-          </Access>
-        </FooterToolbar>
-      )}
-      <UserForm
-        visible={createModalVisible}
-        onVisibleChange={handleModalVisible}
-        onSuccess={() => {
-          handleModalVisible(false);
-          setCurrentRow(undefined);
-          actionRef.current?.reload();
-        }}
-        values={currentRow}
-      />
-      <Drawer
-        width={600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={false}
-      >
-        {currentRow?.id && (
-          <ProDescriptions<API.User>
-            column={2}
-            title={currentRow?.username}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.id,
+          <Button
+            key="create"
+            type="primary"
+            onClick={() => {
+              setEditingUser(null);
+              form.resetFields();
+              setCreateModalVisible(true);
             }}
-            columns={columns}
-          />
-        )}
-      </Drawer>
+          >
+            <PlusOutlined /> 新建
+          </Button>,
+        ]}
+        request={async (params) => {
+          const { current, pageSize, ...rest } = params;
+          const response = await userService.list({
+            current,
+            pageSize,
+            ...rest,
+          });
+          return {
+            data: response.list,
+            total: response.total,
+            success: true,
+          };
+        }}
+        columns={columns}
+      />
+
+      <Modal
+        title={editingUser ? '编辑用户' : '新建用户'}
+        open={createModalVisible}
+        onOk={handleSubmit}
+        onCancel={() => {
+          setCreateModalVisible(false);
+          setEditingUser(null);
+          form.resetFields();
+        }}
+        confirmLoading={createMutation.isPending || updateMutation.isPending}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+        >
+          <Form.Item
+            name="username"
+            label="用户名"
+            rules={[{ required: true, message: '请输入用户名' }]}
+          >
+            <Input disabled={!!editingUser} />
+          </Form.Item>
+          <Form.Item
+            name="email"
+            label="邮箱"
+            rules={[
+              { required: true, message: '请输入邮箱' },
+              { type: 'email', message: '请输入有效的邮箱地址' },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          {!editingUser && (
+            <Form.Item
+              name="password"
+              label="密码"
+              rules={[
+                { required: true, message: '请输入密码' },
+                { min: 6, message: '密码长度不能少于6位' },
+              ]}
+            >
+              <Input.Password />
+            </Form.Item>
+          )}
+          <Form.Item
+            name="role"
+            label="角色"
+            rules={[{ required: true, message: '请选择角色' }]}
+          >
+            <Select>
+              <Select.Option value="admin">管理员</Select.Option>
+              <Select.Option value="user">普通用户</Select.Option>
+            </Select>
+          </Form.Item>
+          {editingUser && (
+            <Form.Item
+              name="status"
+              label="状态"
+              rules={[{ required: true, message: '请选择状态' }]}
+            >
+              <Select>
+                <Select.Option value="active">正常</Select.Option>
+                <Select.Option value="inactive">禁用</Select.Option>
+              </Select>
+            </Form.Item>
+          )}
+        </Form>
+      </Modal>
+
+      <ConfirmModal
+        title="确认删除"
+        open={deleteModalVisible}
+        onOk={handleDelete}
+        onCancel={() => {
+          setDeleteModalVisible(false);
+          setSelectedUser(null);
+        }}
+        confirmLoading={deleteMutation.isPending}
+      >
+        确定要删除用户 "{selectedUser?.username}" 吗？此操作不可恢复。
+      </ConfirmModal>
     </PageContainer>
   );
-};
-
-export default UserPage;
+}

@@ -1,39 +1,23 @@
-import { useState, useCallback } from 'react';
-import { getCurrentUser } from '@/services/user';
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: 'admin' | 'user';
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
 
-export default function useUser() {
-  const [user, setUser] = useState<API.User | undefined>(undefined);
-  const [loading, setLoading] = useState<boolean>(false);
+export interface UserCreateRequest {
+  username: string;
+  email: string;
+  password: string;
+  role: 'admin' | 'user';
+}
 
-  const fetchUserInfo = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await getCurrentUser();
-      if (response.success) {
-        setUser(response.data);
-        return response.data;
-      }
-      return undefined;
-    } catch (error) {
-      return undefined;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const updateUserInfo = useCallback((newUser: API.User) => {
-    setUser(newUser);
-  }, []);
-
-  const clearUserInfo = useCallback(() => {
-    setUser(undefined);
-  }, []);
-
-  return {
-    user,
-    loading,
-    fetchUserInfo,
-    updateUserInfo,
-    clearUserInfo,
-  };
+export interface UserUpdateRequest {
+  email?: string;
+  password?: string;
+  role?: 'admin' | 'user';
+  status?: 'active' | 'inactive';
 }

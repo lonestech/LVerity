@@ -1,8 +1,8 @@
 package service
 
 import (
+	"LVerity/pkg/database"
 	"LVerity/pkg/model"
-	"LVerity/pkg/store"
 	"LVerity/pkg/utils"
 	"encoding/json"
 	"errors"
@@ -39,7 +39,7 @@ func GenerateLicense(licenseType model.LicenseType, maxDevices int, startTime ti
 		UsageCount:  0,
 	}
 
-	if err := store.GetDB().Create(license).Error; err != nil {
+	if err := database.GetDB().Create(license).Error; err != nil {
 		return nil, fmt.Errorf("failed to create license: %v", err)
 	}
 
@@ -49,7 +49,7 @@ func GenerateLicense(licenseType model.LicenseType, maxDevices int, startTime ti
 // VerifyLicense 验证授权码
 func VerifyLicense(code string) (bool, error) {
 	var license model.License
-	if err := store.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
+	if err := database.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
 		return false, fmt.Errorf("failed to get license: %v", err)
 	}
 
@@ -76,7 +76,7 @@ func VerifyLicense(code string) (bool, error) {
 // ActivateLicense 激活授权码
 func ActivateLicense(code string, deviceID string) error {
 	var license model.License
-	if err := store.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
+	if err := database.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
 		return fmt.Errorf("failed to get license: %v", err)
 	}
 
@@ -102,7 +102,7 @@ func ActivateLicense(code string, deviceID string) error {
 	license.DeviceID = deviceID
 	license.UpdatedAt = time.Now()
 
-	if err := store.GetDB().Save(&license).Error; err != nil {
+	if err := database.GetDB().Save(&license).Error; err != nil {
 		return fmt.Errorf("failed to update license: %v", err)
 	}
 
@@ -117,7 +117,7 @@ func ActivateLicense(code string, deviceID string) error {
 		UpdatedAt: time.Now(),
 	}
 
-	if err := store.GetDB().Create(usage).Error; err != nil {
+	if err := database.GetDB().Create(usage).Error; err != nil {
 		return fmt.Errorf("failed to create license usage: %v", err)
 	}
 
@@ -158,7 +158,7 @@ func BatchCreateLicense(count int, licenseType model.LicenseType, maxDevices int
 	}
 
 	// 批量创建授权记录
-	if err := store.GetDB().Create(&licenses).Error; err != nil {
+	if err := database.GetDB().Create(&licenses).Error; err != nil {
 		return nil, fmt.Errorf("failed to create licenses: %v", err)
 	}
 
@@ -168,7 +168,7 @@ func BatchCreateLicense(count int, licenseType model.LicenseType, maxDevices int
 // QueryLicenses 查询授权记录
 func QueryLicenses(status model.LicenseStatus, startTime time.Time, endTime time.Time) ([]model.License, error) {
 	var licenses []model.License
-	query := store.GetDB().Model(&model.License{})
+	query := database.GetDB().Model(&model.License{})
 
 	if status != "" {
 		query = query.Where("status = ?", status)
@@ -204,7 +204,7 @@ func ImportLicenses(licenses []model.License) error {
 		licenses[i].UpdatedAt = time.Now()
 	}
 
-	if err := store.GetDB().Create(&licenses).Error; err != nil {
+	if err := database.GetDB().Create(&licenses).Error; err != nil {
 		return fmt.Errorf("failed to import licenses: %v", err)
 	}
 
@@ -216,22 +216,22 @@ func QueryLicenseStats(startTime time.Time, endTime time.Time) (*model.LicenseSt
 	stats := &model.LicenseStats{}
 
 	// 统计总授权数
-	if err := store.GetDB().Model(&model.License{}).Count(&stats.TotalCount).Error; err != nil {
+	if err := database.GetDB().Model(&model.License{}).Count(&stats.TotalCount).Error; err != nil {
 		return nil, fmt.Errorf("failed to count total licenses: %v", err)
 	}
 
 	// 统计已使用授权数
-	if err := store.GetDB().Model(&model.License{}).Where("status = ?", model.LicenseStatusUsed).Count(&stats.UsedCount).Error; err != nil {
+	if err := database.GetDB().Model(&model.License{}).Where("status = ?", model.LicenseStatusUsed).Count(&stats.UsedCount).Error; err != nil {
 		return nil, fmt.Errorf("failed to count used licenses: %v", err)
 	}
 
 	// 统计未使用授权数
-	if err := store.GetDB().Model(&model.License{}).Where("status = ?", model.LicenseStatusUnused).Count(&stats.UnusedCount).Error; err != nil {
+	if err := database.GetDB().Model(&model.License{}).Where("status = ?", model.LicenseStatusUnused).Count(&stats.UnusedCount).Error; err != nil {
 		return nil, fmt.Errorf("failed to count unused licenses: %v", err)
 	}
 
 	// 统计已过期授权数
-	if err := store.GetDB().Model(&model.License{}).Where("expire_time < ?", time.Now()).Count(&stats.ExpiredCount).Error; err != nil {
+	if err := database.GetDB().Model(&model.License{}).Where("expire_time < ?", time.Now()).Count(&stats.ExpiredCount).Error; err != nil {
 		return nil, fmt.Errorf("failed to count expired licenses: %v", err)
 	}
 
@@ -240,7 +240,7 @@ func QueryLicenseStats(startTime time.Time, endTime time.Time) (*model.LicenseSt
 		Type  model.LicenseType `json:"type"`
 		Count int64             `json:"count"`
 	}
-	if err := store.GetDB().Model(&model.License{}).Select("type, count(*) as count").Group("type").Scan(&typeStats).Error; err != nil {
+	if err := database.GetDB().Model(&model.License{}).Select("type, count(*) as count").Group("type").Scan(&typeStats).Error; err != nil {
 		return nil, fmt.Errorf("failed to count license types: %v", err)
 	}
 	stats.TypeStats = make(map[model.LicenseType]int64)
@@ -260,7 +260,7 @@ func QueryDeviceLocationStats(startTime time.Time, endTime time.Time) (*model.De
 		Province string `json:"province"`
 		Count    int64  `json:"count"`
 	}
-	if err := store.GetDB().Model(&model.Device{}).
+	if err := database.GetDB().Model(&model.Device{}).
 		Select("province, count(*) as count").
 		Where("province != ''").
 		Group("province").
@@ -277,7 +277,7 @@ func QueryDeviceLocationStats(startTime time.Time, endTime time.Time) (*model.De
 		City  string `json:"city"`
 		Count int64  `json:"count"`
 	}
-	if err := store.GetDB().Model(&model.Device{}).
+	if err := database.GetDB().Model(&model.Device{}).
 		Select("city, count(*) as count").
 		Where("city != ''").
 		Group("city").
@@ -295,14 +295,14 @@ func QueryDeviceLocationStats(startTime time.Time, endTime time.Time) (*model.De
 // DisableLicense 禁用授权码
 func DisableLicense(code string) error {
 	var license model.License
-	if err := store.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
+	if err := database.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
 		return fmt.Errorf("failed to get license: %v", err)
 	}
 
 	license.Status = model.LicenseStatusDisabled
 	license.UpdatedAt = time.Now()
 
-	if err := store.GetDB().Save(&license).Error; err != nil {
+	if err := database.GetDB().Save(&license).Error; err != nil {
 		return fmt.Errorf("failed to disable license: %v", err)
 	}
 
@@ -312,7 +312,7 @@ func DisableLicense(code string) error {
 // GetLicenseInfo 获取授权码信息
 func GetLicenseInfo(code string) (*model.License, error) {
 	var license model.License
-	if err := store.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
+	if err := database.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
 		return nil, err
 	}
 
@@ -328,7 +328,7 @@ func GetLicenseInfo(code string) (*model.License, error) {
 
 // BatchDisableLicense 批量禁用授权码
 func BatchDisableLicense(codes []string) error {
-	tx := store.GetDB().Begin()
+	tx := database.GetDB().Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -353,7 +353,7 @@ func BatchDisableLicense(codes []string) error {
 // BatchGetLicenseInfo 批量获取授权码信息
 func BatchGetLicenseInfo(codes []string) ([]*model.License, error) {
 	var licenses []*model.License
-	if err := store.GetDB().Where("code IN ?", codes).Find(&licenses).Error; err != nil {
+	if err := database.GetDB().Where("code IN ?", codes).Find(&licenses).Error; err != nil {
 		return nil, fmt.Errorf("failed to get licenses: %v", err)
 	}
 
@@ -380,7 +380,7 @@ func CreateLicenseGroup(name string, description string, createdBy string) (*mod
 		CreatedBy:   createdBy,
 	}
 
-	if err := store.GetDB().Create(group).Error; err != nil {
+	if err := database.GetDB().Create(group).Error; err != nil {
 		return nil, fmt.Errorf("failed to create license group: %v", err)
 	}
 
@@ -397,7 +397,7 @@ func CreateLicenseTag(name string, color string) (*model.LicenseTag, error) {
 		UpdatedAt: time.Now(),
 	}
 
-	if err := store.GetDB().Create(tag).Error; err != nil {
+	if err := database.GetDB().Create(tag).Error; err != nil {
 		return nil, fmt.Errorf("failed to create license tag: %v", err)
 	}
 
@@ -406,7 +406,7 @@ func CreateLicenseTag(name string, color string) (*model.LicenseTag, error) {
 
 // AssignLicenseToGroup 将授权码分配到组
 func AssignLicenseToGroup(licenseID string, groupID string) error {
-	return store.GetDB().Model(&model.License{}).
+	return database.GetDB().Model(&model.License{}).
 		Where("id = ?", licenseID).
 		Update("group_id", groupID).Error
 }
@@ -414,7 +414,7 @@ func AssignLicenseToGroup(licenseID string, groupID string) error {
 // AddTagsToLicense 为授权码添加标签
 func AddTagsToLicense(licenseID string, tagIDs []string) error {
 	// 开启事务
-	tx := store.GetDB().Begin()
+	tx := database.GetDB().Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -445,10 +445,10 @@ func AddTagsToLicense(licenseID string, tagIDs []string) error {
 
 // UpdateLicenseMetadata 更新授权码元数据
 func UpdateLicenseMetadata(code string, metadata string) error {
-	result := store.GetDB().Model(&model.License{}).
+	result := database.GetDB().Model(&model.License{}).
 		Where("code = ?", code).
 		Update("metadata", metadata)
-    
+
 	if result.Error != nil {
 		return result.Error
 	}
@@ -465,7 +465,7 @@ func UpdateLicenseFeatures(licenseID string, features []string) error {
 		return err
 	}
 
-	return store.GetDB().Model(&model.License{}).
+	return database.GetDB().Model(&model.License{}).
 		Where("id = ?", licenseID).
 		Update("features", string(featuresJSON)).Error
 }
@@ -474,10 +474,10 @@ func UpdateLicenseFeatures(licenseID string, features []string) error {
 func ListLicenses(page string, pageSize string, status string, groupID string) ([]model.License, int64, error) {
 	var licenses []model.License
 	var total int64
-    
+
 	offset, limit := utils.GetPagination(page, pageSize)
-	query := store.GetDB().Model(&model.License{})
-    
+	query := database.GetDB().Model(&model.License{})
+
 	// 应用过滤条件
 	if status != "" {
 		query = query.Where("status = ?", status)
@@ -485,17 +485,17 @@ func ListLicenses(page string, pageSize string, status string, groupID string) (
 	if groupID != "" {
 		query = query.Where("group_id = ?", groupID)
 	}
-    
+
 	// 获取总数
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-    
+
 	// 获取分页数据
 	if err := query.Offset(offset).Limit(limit).Find(&licenses).Error; err != nil {
 		return nil, 0, err
 	}
-    
+
 	// 处理 Features 字段
 	for i := range licenses {
 		if licenses[i].FeaturesStr != "" {
@@ -504,14 +504,14 @@ func ListLicenses(page string, pageSize string, status string, groupID string) (
 			}
 		}
 	}
-    
+
 	return licenses, total, nil
 }
 
 // GetLicenseByCode 根据授权码获取授权信息
 func GetLicenseByCode(code string) (*model.License, error) {
 	var license model.License
-	if err := store.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
+	if err := database.GetDB().Where("code = ?", code).First(&license).Error; err != nil {
 		return nil, err
 	}
 
@@ -527,7 +527,7 @@ func GetLicenseByCode(code string) (*model.License, error) {
 
 // DeleteLicense 删除授权码
 func DeleteLicense(code string) error {
-	result := store.GetDB().Delete(&model.License{}, "code = ?", code)
+	result := database.GetDB().Delete(&model.License{}, "code = ?", code)
 	if result.Error != nil {
 		return result.Error
 	}

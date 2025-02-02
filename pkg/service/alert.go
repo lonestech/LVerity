@@ -1,8 +1,8 @@
 package service
 
 import (
+	"LVerity/pkg/database"
 	"LVerity/pkg/model"
-	"LVerity/pkg/store"
 	"LVerity/pkg/utils"
 	"fmt"
 	"sync"
@@ -70,7 +70,7 @@ func CreateAlert(deviceID string, title string, level model.AlertLevel, descript
 		UpdatedAt:   time.Now(),
 	}
 
-	if err := store.GetDB().Create(alert).Error; err != nil {
+	if err := database.GetDB().Create(alert).Error; err != nil {
 		return nil, fmt.Errorf("failed to create alert: %v", err)
 	}
 
@@ -78,7 +78,7 @@ func CreateAlert(deviceID string, title string, level model.AlertLevel, descript
 	now := time.Now()
 	device.LastAlertTime = &now
 	device.AlertCount++
-	if err := store.GetDB().Save(device).Error; err != nil {
+	if err := database.GetDB().Save(device).Error; err != nil {
 		return nil, fmt.Errorf("failed to update device alert info: %v", err)
 	}
 
@@ -88,7 +88,7 @@ func CreateAlert(deviceID string, title string, level model.AlertLevel, descript
 // GetAlert 获取告警信息
 func GetAlert(alertID string) (*model.Alert, error) {
 	var alert model.Alert
-	if err := store.GetDB().Where("id = ?", alertID).First(&alert).Error; err != nil {
+	if err := database.GetDB().Where("id = ?", alertID).First(&alert).Error; err != nil {
 		return nil, fmt.Errorf("failed to get alert: %v", err)
 	}
 	return &alert, nil
@@ -96,7 +96,7 @@ func GetAlert(alertID string) (*model.Alert, error) {
 
 // GetAlerts 获取告警记录
 func GetAlerts(deviceID string, startTime, endTime time.Time) ([]model.Alert, error) {
-	query := store.GetDB().Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	query := database.GetDB().Where("created_at BETWEEN ? AND ?", startTime, endTime)
 	if deviceID != "" {
 		query = query.Where("device_id = ?", deviceID)
 	}
@@ -111,7 +111,7 @@ func GetAlerts(deviceID string, startTime, endTime time.Time) ([]model.Alert, er
 // GetAlertsByDevice 获取设备的告警记录
 func GetAlertsByDevice(deviceID string) ([]model.Alert, error) {
 	var alerts []model.Alert
-	if err := store.GetDB().Where("device_id = ?", deviceID).Find(&alerts).Error; err != nil {
+	if err := database.GetDB().Where("device_id = ?", deviceID).Find(&alerts).Error; err != nil {
 		return nil, fmt.Errorf("failed to get alerts: %v", err)
 	}
 	return alerts, nil
@@ -120,7 +120,7 @@ func GetAlertsByDevice(deviceID string) ([]model.Alert, error) {
 // GetAlertsByStatus 获取指定状态的告警记录
 func GetAlertsByStatus(status model.AlertStatus) ([]model.Alert, error) {
 	var alerts []model.Alert
-	if err := store.GetDB().Where("status = ?", status).Find(&alerts).Error; err != nil {
+	if err := database.GetDB().Where("status = ?", status).Find(&alerts).Error; err != nil {
 		return nil, fmt.Errorf("failed to get alerts: %v", err)
 	}
 	return alerts, nil
@@ -136,7 +136,7 @@ func UpdateAlertStatus(alertID string, status model.AlertStatus) error {
 	alert.Status = status
 	alert.UpdatedAt = time.Now()
 
-	if err := store.GetDB().Save(alert).Error; err != nil {
+	if err := database.GetDB().Save(alert).Error; err != nil {
 		return fmt.Errorf("failed to update alert status: %v", err)
 	}
 
@@ -153,7 +153,7 @@ func UpdateAlertDescription(alertID string, description string) error {
 	alert.Description = description
 	alert.UpdatedAt = time.Now()
 
-	if err := store.GetDB().Save(alert).Error; err != nil {
+	if err := database.GetDB().Save(alert).Error; err != nil {
 		return fmt.Errorf("failed to update alert description: %v", err)
 	}
 
@@ -162,7 +162,7 @@ func UpdateAlertDescription(alertID string, description string) error {
 
 // DeleteAlert 删除告警记录
 func DeleteAlert(alertID string) error {
-	if err := store.GetDB().Delete(&model.Alert{}, "id = ?", alertID).Error; err != nil {
+	if err := database.GetDB().Delete(&model.Alert{}, "id = ?", alertID).Error; err != nil {
 		return fmt.Errorf("failed to delete alert: %v", err)
 	}
 	return nil
@@ -170,7 +170,7 @@ func DeleteAlert(alertID string) error {
 
 // GetAlertCount 获取告警数量
 func GetAlertCount(deviceID string, status model.AlertStatus) (int64, error) {
-	query := store.GetDB().Model(&model.Alert{})
+	query := database.GetDB().Model(&model.Alert{})
 	if deviceID != "" {
 		query = query.Where("device_id = ?", deviceID)
 	}
@@ -189,7 +189,7 @@ func GetAlertCount(deviceID string, status model.AlertStatus) (int64, error) {
 // GetAlertsByLevel 获取指定级别的告警记录
 func GetAlertsByLevel(level model.AlertLevel) ([]model.Alert, error) {
 	var alerts []model.Alert
-	if err := store.GetDB().Where("level = ?", level).Find(&alerts).Error; err != nil {
+	if err := database.GetDB().Where("level = ?", level).Find(&alerts).Error; err != nil {
 		return nil, fmt.Errorf("failed to get alerts: %v", err)
 	}
 	return alerts, nil
@@ -198,7 +198,7 @@ func GetAlertsByLevel(level model.AlertLevel) ([]model.Alert, error) {
 // GetAlertsByTimeRange 获取指定时间范围内的告警记录
 func GetAlertsByTimeRange(startTime, endTime time.Time) ([]model.Alert, error) {
 	var alerts []model.Alert
-	if err := store.GetDB().Where("created_at BETWEEN ? AND ?", startTime, endTime).Find(&alerts).Error; err != nil {
+	if err := database.GetDB().Where("created_at BETWEEN ? AND ?", startTime, endTime).Find(&alerts).Error; err != nil {
 		return nil, fmt.Errorf("failed to get alerts: %v", err)
 	}
 	return alerts, nil
@@ -218,7 +218,7 @@ func GetResolvedAlerts() ([]model.Alert, error) {
 func CheckAlertRules(device *model.Device) error {
 	// 获取设备的所有规则
 	var rules []model.AlertRule
-	if err := store.GetDB().Where("device_id = ? OR device_id = ''", device.ID).Find(&rules).Error; err != nil {
+	if err := database.GetDB().Where("device_id = ? OR device_id = ''", device.ID).Find(&rules).Error; err != nil {
 		return fmt.Errorf("failed to get alert rules: %v", err)
 	}
 

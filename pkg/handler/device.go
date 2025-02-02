@@ -1,9 +1,9 @@
 package handler
 
 import (
+	"LVerity/pkg/database"
 	"LVerity/pkg/model"
 	"LVerity/pkg/service"
-	"LVerity/pkg/store"
 	"fmt"
 	"net/http"
 	"time"
@@ -26,17 +26,17 @@ type UpdateDeviceInfoRequest struct {
 
 // DeviceHeartbeatRequest 设备心跳请求
 type DeviceHeartbeatRequest struct {
-	DeviceID  string         `json:"device_id"`
-	IP        string         `json:"ip"`
+	DeviceID string `json:"device_id"`
+	IP       string `json:"ip"`
 }
 
 // ExportLogsRequest 导出日志请求
 type ExportLogsRequest struct {
-	StartTime  time.Time         `json:"start_time"`
-	EndTime    time.Time         `json:"end_time"`
-	DeviceID   string           `json:"device_id"`
-	LogTypes   []string         `json:"log_types"`
-	Format     model.ExportFormat `json:"format"`
+	StartTime time.Time          `json:"start_time"`
+	EndTime   time.Time          `json:"end_time"`
+	DeviceID  string             `json:"device_id"`
+	LogTypes  []string           `json:"log_types"`
+	Format    model.ExportFormat `json:"format"`
 }
 
 // RegisterDevice 注册设备
@@ -126,7 +126,7 @@ func GetDeviceLocation(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"device_id": device.ID,
 		"timezone":  device.Timezone,
-		"language": device.Language,
+		"language":  device.Language,
 	})
 }
 
@@ -134,7 +134,7 @@ func GetDeviceLocation(c *gin.Context) {
 func GetDevices(c *gin.Context) {
 	status := c.Query("status")
 	var devices []model.Device
-	if err := store.GetDB().Where("status = ?", status).Find(&devices).Error; err != nil {
+	if err := database.GetDB().Where("status = ?", status).Find(&devices).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -144,102 +144,102 @@ func GetDevices(c *gin.Context) {
 
 // ListDevices 获取设备列表
 func ListDevices(c *gin.Context) {
-    // 从查询参数获取分页信息
-    page := c.DefaultQuery("page", "1")
-    pageSize := c.DefaultQuery("pageSize", "10")
+	// 从查询参数获取分页信息
+	page := c.DefaultQuery("page", "1")
+	pageSize := c.DefaultQuery("pageSize", "10")
 
-    devices, total, err := service.ListDevices(page, pageSize)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "success": false,
-            "error_message": err.Error(),
-        })
-        return
-    }
+	devices, total, err := service.ListDevices(page, pageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success":       false,
+			"error_message": err.Error(),
+		})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{
-        "success": true,
-        "data": gin.H{
-            "list": devices,
-            "total": total,
-        },
-    })
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"list":  devices,
+			"total": total,
+		},
+	})
 }
 
 // CreateDevice 创建设备
 func CreateDevice(c *gin.Context) {
-    var req RegisterDeviceRequest
-    if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{
-            "success": false,
-            "error_message": err.Error(),
-        })
-        return
-    }
+	var req RegisterDeviceRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success":       false,
+			"error_message": err.Error(),
+		})
+		return
+	}
 
-    device, err := service.RegisterDevice(req.DiskID, req.BIOS, req.Motherboard, req.Name)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "success": false,
-            "error_message": err.Error(),
-        })
-        return
-    }
+	device, err := service.RegisterDevice(req.DiskID, req.BIOS, req.Motherboard, req.Name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success":       false,
+			"error_message": err.Error(),
+		})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{
-        "success": true,
-        "data": device,
-    })
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    device,
+	})
 }
 
 // UpdateDevice 更新设备
 func UpdateDevice(c *gin.Context) {
-    deviceID := c.Param("id")
-    var req UpdateDeviceInfoRequest
-    if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{
-            "success": false,
-            "error_message": err.Error(),
-        })
-        return
-    }
+	deviceID := c.Param("id")
+	var req UpdateDeviceInfoRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success":       false,
+			"error_message": err.Error(),
+		})
+		return
+	}
 
-    err := service.UpdateDevice(deviceID, req.Updates)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "success": false,
-            "error_message": err.Error(),
-        })
-        return
-    }
+	err := service.UpdateDevice(deviceID, req.Updates)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success":       false,
+			"error_message": err.Error(),
+		})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{
-        "success": true,
-        "data": gin.H{
-            "message": "Device updated successfully",
-        },
-    })
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"message": "Device updated successfully",
+		},
+	})
 }
 
 // DeleteDevice 删除设备
 func DeleteDevice(c *gin.Context) {
-    deviceID := c.Param("id")
+	deviceID := c.Param("id")
 
-    err := service.DeleteDevice(deviceID)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "success": false,
-            "error_message": err.Error(),
-        })
-        return
-    }
+	err := service.DeleteDevice(deviceID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success":       false,
+			"error_message": err.Error(),
+		})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{
-        "success": true,
-        "data": gin.H{
-            "message": "Device deleted successfully",
-        },
-    })
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"message": "Device deleted successfully",
+		},
+	})
 }
 
 // ExportDeviceLogs 导出设备日志
@@ -251,10 +251,10 @@ func ExportDeviceLogs(c *gin.Context) {
 	}
 
 	// 设置响应头
-	fileName := fmt.Sprintf("device_logs_%s.%s", 
+	fileName := fmt.Sprintf("device_logs_%s.%s",
 		time.Now().Format("20060102150405"),
 		req.Format)
-	
+
 	c.Header("Content-Description", "File Transfer")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
 	c.Header("Content-Type", req.Format.ContentType())
@@ -297,7 +297,7 @@ func GetDeviceUsage(c *gin.Context) {
 // GetOnlineDevices 获取在线设备列表
 func GetOnlineDevices(c *gin.Context) {
 	var devices []model.Device
-	if err := store.GetDB().Where("status = ?", model.DeviceStatusNormal).
+	if err := database.GetDB().Where("status = ?", model.DeviceStatusNormal).
 		Where("last_heartbeat > ?", time.Now().Add(-5*time.Minute)).
 		Find(&devices).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -322,14 +322,14 @@ func GetDeviceUsageReport(c *gin.Context) {
 
 	report := gin.H{
 		"device_id":        device.ID,
-		"name":            device.Name,
-		"status":          device.Status,
+		"name":             device.Name,
+		"status":           device.Status,
 		"avg_usage_time":   device.UsageStats.AverageUsageTime,
 		"peak_usage_time":  device.UsageStats.PeakUsageTime,
 		"last_active_date": device.UsageStats.LastActiveDate,
-		"alert_count":     device.AlertCount,
-		"last_alert_time": device.LastAlertTime,
-		"risk_level":      device.RiskLevel,
+		"alert_count":      device.AlertCount,
+		"last_alert_time":  device.LastAlertTime,
+		"risk_level":       device.RiskLevel,
 	}
 
 	c.JSON(http.StatusOK, report)
@@ -352,7 +352,7 @@ func GetDeviceInfo(c *gin.Context) {
 func UpdateDeviceMetadata(c *gin.Context) {
 	deviceID := c.Param("id")
 	var metadata map[string]interface{}
-	
+
 	if err := c.ShouldBindJSON(&metadata); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

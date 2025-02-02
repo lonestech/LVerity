@@ -3,8 +3,8 @@ package service
 import (
 	"LVerity/pkg/common"
 	"LVerity/pkg/config"
+	"LVerity/pkg/database"
 	"LVerity/pkg/model"
-	"LVerity/pkg/store"
 	"errors"
 	"time"
 
@@ -12,16 +12,16 @@ import (
 )
 
 var (
-	ErrUserNotFound     = errors.New("用户不存在")
-	ErrInvalidPassword  = errors.New("密码错误")
-	ErrUsernameTaken    = errors.New("用户名已被使用")
-	ErrInvalidRoleID    = errors.New("无效的角色ID")
+	ErrUserNotFound    = errors.New("用户不存在")
+	ErrInvalidPassword = errors.New("密码错误")
+	ErrUsernameTaken   = errors.New("用户名已被使用")
+	ErrInvalidRoleID   = errors.New("无效的角色ID")
 )
 
 // GetUserByID 通过ID获取用户
 func GetUserByID(id string) (*model.User, error) {
 	var user model.User
-	result := store.GetDB().Where("id = ?", id).First(&user)
+	result := database.GetDB().Where("id = ?", id).First(&user)
 	if result.Error != nil {
 		return nil, ErrUserNotFound
 	}
@@ -31,7 +31,7 @@ func GetUserByID(id string) (*model.User, error) {
 // GetUserByUsername 通过用户名获取用户
 func GetUserByUsername(username string) (*model.User, error) {
 	var user model.User
-	result := store.GetDB().Where("username = ?", username).First(&user)
+	result := database.GetDB().Where("username = ?", username).First(&user)
 	if result.Error != nil {
 		return nil, ErrUserNotFound
 	}
@@ -108,7 +108,7 @@ func CreateUser(username, password, roleID string) (*model.User, error) {
 	}
 
 	// 保存到数据库
-	if err := store.GetDB().Create(user).Error; err != nil {
+	if err := database.GetDB().Create(user).Error; err != nil {
 		return nil, err
 	}
 
@@ -117,7 +117,7 @@ func CreateUser(username, password, roleID string) (*model.User, error) {
 
 // UpdateUser 更新用户信息
 func UpdateUser(user *model.User) error {
-	return store.GetDB().Save(user).Error
+	return database.GetDB().Save(user).Error
 }
 
 // UpdateUserProfile 更新用户信息
@@ -151,7 +151,7 @@ func UpdateUserProfile(id string, updates map[string]interface{}) (*model.User, 
 		user.Status = status
 	}
 
-	if err := store.GetDB().Save(user).Error; err != nil {
+	if err := database.GetDB().Save(user).Error; err != nil {
 		return nil, err
 	}
 
@@ -176,18 +176,18 @@ func ChangePassword(id string, oldPassword, newPassword string) error {
 	}
 
 	// 保存到数据库
-	return store.GetDB().Save(user).Error
+	return database.GetDB().Save(user).Error
 }
 
 // DeleteUser 删除用户
 func DeleteUser(id string) error {
-	return store.GetDB().Delete(&model.User{}, "id = ?", id).Error
+	return database.GetDB().Delete(&model.User{}, "id = ?", id).Error
 }
 
 // CheckUsernameExists 检查用户名是否已存在
 func CheckUsernameExists(username string) (bool, error) {
 	var count int64
-	err := store.GetDB().Model(&model.User{}).Where("username = ?", username).Count(&count).Error
+	err := database.GetDB().Model(&model.User{}).Where("username = ?", username).Count(&count).Error
 	if err != nil {
 		return false, err
 	}
@@ -205,7 +205,7 @@ func ListUsers(page, pageSize int) ([]model.User, int64, error) {
 	var users []model.User
 	var total int64
 
-	tx := store.GetDB().Model(&model.User{})
+	tx := database.GetDB().Model(&model.User{})
 	err := tx.Count(&total).Error
 	if err != nil {
 		return nil, 0, err

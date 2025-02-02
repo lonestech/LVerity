@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"LVerity/pkg/store"
 )
 
 // RunMigrations 执行数据库迁移
@@ -33,7 +32,7 @@ func RunMigrations(migrationsDir string) error {
 	sort.Strings(migrations)
 
 	// 创建迁移记录表
-	if err := store.GetDB().Exec(`
+	if err := GetDB().Exec(`
 		CREATE TABLE IF NOT EXISTS migrations (
 			id VARCHAR(255) PRIMARY KEY,
 			executed_at DATETIME NOT NULL
@@ -46,7 +45,7 @@ func RunMigrations(migrationsDir string) error {
 	for _, migration := range migrations {
 		// 检查是否已执行过该迁移
 		var count int64
-		if err := store.GetDB().Model(&struct{ ID string }{}).
+		if err := GetDB().Model(&struct{ ID string }{}).
 			Table("migrations").
 			Where("id = ?", migration).
 			Count(&count).Error; err != nil {
@@ -65,7 +64,7 @@ func RunMigrations(migrationsDir string) error {
 		}
 
 		// 开始事务
-		tx := store.GetDB().Begin()
+		tx := GetDB().Begin()
 
 		// 分割SQL语句
 		statements := strings.Split(string(content), ";")

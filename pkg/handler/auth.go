@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"net/http"
 	"LVerity/pkg/service"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,7 +33,7 @@ func GetCaptcha(c *gin.Context) {
 	id, b64s, err := service.GenerateCaptcha()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": "生成验证码失败",
 		})
 		return
@@ -41,7 +42,7 @@ func GetCaptcha(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data": gin.H{
-			"captcha_id": id,
+			"captcha_id":    id,
 			"captcha_image": b64s,
 		},
 	})
@@ -52,7 +53,7 @@ func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": err.Error(),
 		})
 		return
@@ -61,7 +62,7 @@ func Login(c *gin.Context) {
 	// 验证验证码
 	if !service.VerifyCaptcha(req.CaptchaId, req.Captcha) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": "验证码错误",
 		})
 		return
@@ -70,7 +71,7 @@ func Login(c *gin.Context) {
 	token, user, err := service.Login(req.Username, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": err.Error(),
 		})
 		return
@@ -79,7 +80,7 @@ func Login(c *gin.Context) {
 	token, err = service.GenerateToken(user.ID, user.Username, user.RoleID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": err.Error(),
 		})
 		return
@@ -89,69 +90,8 @@ func Login(c *gin.Context) {
 		"success": true,
 		"data": gin.H{
 			"token": token,
-			"user": user,
+			"user":  user,
 		},
-	})
-}
-
-// GetUserProfile 获取当前用户信息
-func GetUserProfile(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"error_message": "未找到用户信息",
-		})
-		return
-	}
-
-	user, err := service.GetUserByID(userID.(string))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error_message": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data": user,
-	})
-}
-
-// UpdateUserProfile 更新用户信息
-func UpdateUserProfile(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"error_message": "未找到用户信息",
-		})
-		return
-	}
-
-	var updates map[string]interface{}
-	if err := c.ShouldBindJSON(&updates); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error_message": err.Error(),
-		})
-		return
-	}
-
-	user, err := service.UpdateUserProfile(userID.(string), updates)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error_message": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data": user,
 	})
 }
 
@@ -160,7 +100,7 @@ func ChangePassword(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": "未找到用户信息",
 		})
 		return
@@ -169,7 +109,7 @@ func ChangePassword(c *gin.Context) {
 	var req ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": err.Error(),
 		})
 		return
@@ -178,7 +118,7 @@ func ChangePassword(c *gin.Context) {
 	err := service.ChangePassword(userID.(string), req.OldPassword, req.NewPassword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": err.Error(),
 		})
 		return
@@ -186,7 +126,7 @@ func ChangePassword(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data": nil,
+		"data":    nil,
 	})
 }
 
@@ -195,7 +135,7 @@ func RefreshToken(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": "未找到用户信息",
 		})
 		return
@@ -204,7 +144,7 @@ func RefreshToken(c *gin.Context) {
 	token, err := service.GenerateToken(userID.(string), "", "")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": err.Error(),
 		})
 		return
@@ -223,7 +163,7 @@ func CreateUser(c *gin.Context) {
 	var req CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": err.Error(),
 		})
 		return
@@ -232,7 +172,7 @@ func CreateUser(c *gin.Context) {
 	user, err := service.CreateUser(req.Username, req.Password, req.RoleID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"success":       false,
 			"error_message": err.Error(),
 		})
 		return
@@ -240,6 +180,6 @@ func CreateUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data": user,
+		"data":    user,
 	})
 }

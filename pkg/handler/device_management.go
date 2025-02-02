@@ -1,9 +1,9 @@
 package handler
 
 import (
+	"LVerity/pkg/database"
 	"LVerity/pkg/model"
 	"LVerity/pkg/service"
-	"LVerity/pkg/store"
 	"LVerity/pkg/utils"
 	"encoding/json"
 	"net/http"
@@ -42,7 +42,7 @@ func CreateGroup(c *gin.Context) {
 		UpdatedAt:   time.Now(),
 	}
 
-	if err := store.GetDB().Create(group).Error; err != nil {
+	if err := database.GetDB().Create(group).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -78,7 +78,7 @@ func GetDevicesByGroup(c *gin.Context) {
 	}
 
 	var devices []model.Device
-	if err := store.GetDB().Where("group_id = ?", groupID).Find(&devices).Error; err != nil {
+	if err := database.GetDB().Where("group_id = ?", groupID).Find(&devices).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -117,7 +117,7 @@ func CreateRule(c *gin.Context) {
 		UpdatedAt:   time.Now(),
 	}
 
-	if err := store.GetDB().Create(rule).Error; err != nil {
+	if err := database.GetDB().Create(rule).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -159,7 +159,7 @@ func RecordAbnormalBehavior(c *gin.Context) {
 		CreatedAt:   time.Now(),
 	}
 
-	if err := store.GetDB().Create(behavior).Error; err != nil {
+	if err := database.GetDB().Create(behavior).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -175,7 +175,7 @@ func GetDeviceAbnormalBehaviors(c *gin.Context) {
 	}
 
 	var behaviors []model.AbnormalBehavior
-	if err := store.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
+	if err := database.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -192,13 +192,13 @@ func GetDeviceStatus(c *gin.Context) {
 	var behaviors []model.AbnormalBehavior
 
 	// 获取设备信息
-	if err := store.GetDB().First(&device, "id = ?", deviceID).Error; err != nil {
+	if err := database.GetDB().First(&device, "id = ?", deviceID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	// 获取异常行为记录
-	if err := store.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
+	if err := database.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -207,7 +207,7 @@ func GetDeviceStatus(c *gin.Context) {
 	riskLevel := utils.CalculateDeviceRisk(&device, behaviors)
 
 	response := gin.H{
-		"device_id":       device.ID,
+		"device_id":      device.ID,
 		"status":         device.Status,
 		"risk_level":     riskLevel,
 		"last_heartbeat": device.LastHeartbeat,
@@ -225,13 +225,13 @@ func AnalyzeDeviceBehavior(c *gin.Context) {
 	var behaviors []model.AbnormalBehavior
 
 	// 获取设备信息
-	if err := store.GetDB().First(&device, "id = ?", deviceID).Error; err != nil {
+	if err := database.GetDB().First(&device, "id = ?", deviceID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	// 获取设备行为记录
-	if err := store.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
+	if err := database.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -255,12 +255,12 @@ func GetDeviceRisk(c *gin.Context) {
 	var device model.Device
 	var behaviors []model.AbnormalBehavior
 
-	if err := store.GetDB().First(&device, "id = ?", deviceID).Error; err != nil {
+	if err := database.GetDB().First(&device, "id = ?", deviceID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := store.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
+	if err := database.GetDB().Where("device_id = ?", deviceID).Find(&behaviors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
