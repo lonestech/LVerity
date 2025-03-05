@@ -213,59 +213,106 @@ LVerity/
 
 ## Frontend Development
 
-1. Navigate to the frontend directory:
+The frontend is built with React, TypeScript, and Ant Design, providing a modern and responsive user interface.
+
+### Frontend Structure
+
+- React 18 for UI rendering
+- TypeScript for type safety
+- Ant Design for component library
+- Axios for API communication
+- React Router for navigation
+
+### Frontend-Backend Integration
+
+The backend serves the frontend assets directly, making deployment simpler. When you run the backend server, it will automatically serve the frontend application.
+
+## Quick Start
+
+### Prerequisites
+
+- Go 1.20+
+- Node.js 16+ and NPM
+- SQLite (included)
+
+### Building and Running
+
+1. **Build the frontend application:**
+
+```bash
+# Windows
+build_frontend.bat
+
+# Linux/Mac
+chmod +x build_frontend.sh
+./build_frontend.sh
+```
+
+2. **Run the backend server:**
+
+```bash
+go run main.go
+```
+
+3. **Access the application:**
+
+Open your browser and navigate to [http://localhost:8080](http://localhost:8080)
+
+### API Endpoints
+
+The backend API is available at `/api`. All frontend requests to the backend use this prefix.
+
+#### Authentication
+
+- POST `/auth/login` - User login
+- POST `/auth/logout` - User logout
+- GET `/auth/captcha` - Get captcha for login
+- POST `/auth/refresh` - Refresh JWT token
+
+#### Devices
+
+- GET `/api/devices` - List devices
+- GET `/api/devices/:id` - Get device details
+- POST `/api/devices` - Create device
+- PUT `/api/devices/:id` - Update device
+- DELETE `/api/devices/:id` - Delete device
+
+#### Licenses
+
+- GET `/api/licenses` - List licenses
+- GET `/api/licenses/:id` - Get license details
+- POST `/api/licenses` - Create license
+- PUT `/api/licenses/:id` - Update license
+- DELETE `/api/licenses/:id` - Delete license
+- POST `/api/licenses/activate` - Activate license for a device
+
+#### Users
+
+- GET `/api/users` - List users
+- GET `/api/users/:id` - Get user details
+- POST `/api/users` - Create user
+- PUT `/api/users/:id` - Update user
+- DELETE `/api/users/:id` - Delete user
+
+## Development Mode
+
+For development, you can run the frontend and backend separately:
+
+1. **Run the backend:**
+
+```bash
+go run main.go
+```
+
+2. **Run the frontend development server:**
+
 ```bash
 cd web
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-
-3. Start development server:
-```bash
 npm run dev
 ```
 
-4. Build for production:
-```bash
-npm run build
-```
-
-### Environment Configuration
-
-Create `.env` files for different environments:
-
-```env
-# .env.development
-VITE_API_BASE_URL=http://localhost:8080/api
-VITE_APP_TITLE=LVerity (Dev)
-
-# .env.production
-VITE_API_BASE_URL=/api
-VITE_APP_TITLE=LVerity
-```
-
-### Development Guidelines
-
-1. Component Development
-- Use functional components with hooks
-- Implement proper TypeScript types
-- Follow React best practices for performance
-- Write unit tests using React Testing Library
-
-2. State Management
-- Use Redux Toolkit for global state
-- Implement Redux Thunk for async actions
-- Use React Query for server state management
-- Follow proper state normalization practices
-
-3. Styling
-- Use styled-components for component styling
-- Follow Ant Design design guidelines
-- Implement responsive design principles
-- Support theme customization
+The Vite development server will proxy API requests to the backend automatically.
 
 ## Contributing
 

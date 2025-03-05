@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -214,5 +215,50 @@ func GetUserProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    user,
+	})
+}
+
+// ListUsers 获取用户列表（分页）
+func ListUsers(c *gin.Context) {
+	// 获取分页参数
+	page := c.DefaultQuery("page", "1")
+	pageSize := c.DefaultQuery("pageSize", "10")
+
+	// 转换为整数
+	pageInt, err := strconv.Atoi(page)
+	if err != nil || pageInt < 1 {
+		pageInt = 1
+	}
+	pageSizeInt, err := strconv.Atoi(pageSize)
+	if err != nil || pageSizeInt < 1 {
+		pageSizeInt = 10
+	}
+
+	// 限制每页最大数量
+	if pageSizeInt > 100 {
+		pageSizeInt = 100
+	}
+
+	// 获取用户列表
+	users, total, err := service.ListUsers(pageInt, pageSizeInt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "获取用户列表失败",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "success",
+		"code":    200,
+		"data": gin.H{
+			"users":    users,
+			"total":    total,
+			"page":     pageInt,
+			"pageSize": pageSizeInt,
+		},
 	})
 }

@@ -185,8 +185,8 @@ func GetDeviceAbnormalBehaviors(c *gin.Context) {
 
 // 设备监控相关处理器
 
-// GetDeviceStatus 获取设备状态
-func GetDeviceStatus(c *gin.Context) {
+// GetDeviceMonitorStatus 获取设备监控状态
+func GetDeviceMonitorStatus(c *gin.Context) {
 	deviceID := c.Param("deviceID")
 	var device model.Device
 	var behaviors []model.AbnormalBehavior

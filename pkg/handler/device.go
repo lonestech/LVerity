@@ -376,3 +376,152 @@ func GetDeviceStats(c *gin.Context) {
 
 	c.JSON(http.StatusOK, stats)
 }
+
+// GetDeviceStatus 获取设备状态
+func GetDeviceStatus(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "设备ID不能为空"})
+		return
+	}
+
+	// 这里应该调用实际的服务层函数获取设备状态
+	// 目前返回模拟数据
+	status := gin.H{
+		"deviceId": id,
+		"status": "online",
+		"lastHeartbeat": time.Now().Add(-5 * time.Minute).Format(time.RFC3339),
+		"uptime": "12h30m",
+		"cpuUsage": 35.5,
+		"memoryUsage": 42.3,
+		"diskUsage": 68.7,
+		"networkStatus": "normal",
+		"ipAddress": "192.168.1.100",
+		"connectionQuality": "good",
+	}
+
+	c.JSON(http.StatusOK, status)
+}
+
+// GetDeviceLogs 获取设备日志
+func GetDeviceLogs(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "设备ID不能为空"})
+		return
+	}
+
+	// 处理分页参数
+	page := 1
+	pageSize := 20
+	// 这里应该调用实际的服务层函数获取设备日志
+	// 目前返回模拟数据
+	logs := []gin.H{
+		{"id": "1", "time": time.Now().Add(-1 * time.Hour).Format(time.RFC3339), "level": "info", "message": "应用启动"},
+		{"id": "2", "time": time.Now().Add(-50 * time.Minute).Format(time.RFC3339), "level": "warning", "message": "内存使用率超过80%"},
+		{"id": "3", "time": time.Now().Add(-30 * time.Minute).Format(time.RFC3339), "level": "error", "message": "数据库连接超时"},
+		{"id": "4", "time": time.Now().Add(-10 * time.Minute).Format(time.RFC3339), "level": "info", "message": "授权验证成功"},
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"deviceId": id,
+		"logs": logs,
+		"pagination": gin.H{
+			"page": page,
+			"pageSize": pageSize,
+			"total": 4,
+		},
+	})
+}
+
+// GetDeviceAlerts 获取设备告警
+func GetDeviceAlerts(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "设备ID不能为空"})
+		return
+	}
+
+	// 处理分页参数
+	page := 1
+	pageSize := 20
+	// 这里应该调用实际的服务层函数获取设备告警
+	// 目前返回模拟数据
+	alerts := []gin.H{
+		{"id": "1", "time": time.Now().Add(-2 * time.Hour).Format(time.RFC3339), "level": "critical", "type": "security", "message": "检测到未授权访问"},
+		{"id": "2", "time": time.Now().Add(-1 * time.Hour).Format(time.RFC3339), "level": "major", "type": "performance", "message": "CPU使用率持续超过90%"},
+		{"id": "3", "time": time.Now().Add(-30 * time.Minute).Format(time.RFC3339), "level": "minor", "type": "license", "message": "授权即将到期"},
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"deviceId": id,
+		"alerts": alerts,
+		"pagination": gin.H{
+			"page": page,
+			"pageSize": pageSize,
+			"total": 3,
+		},
+	})
+}
+
+// SendDeviceCommand 发送设备指令
+func SendDeviceCommand(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "设备ID不能为空"})
+		return
+	}
+
+	var command struct {
+		Type    string                 `json:"type" binding:"required"`
+		Params  map[string]interface{} `json:"params"`
+		Timeout int                    `json:"timeout"`
+	}
+
+	if err := c.ShouldBindJSON(&command); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 这里应该调用实际的服务层函数发送指令到设备
+	// 目前返回模拟数据
+	commandId := fmt.Sprintf("cmd-%d", time.Now().Unix())
+	
+	c.JSON(http.StatusOK, gin.H{
+		"deviceId": id,
+		"commandId": commandId,
+		"status": "sent",
+		"message": "指令已发送到设备",
+		"sentTime": time.Now().Format(time.RFC3339),
+	})
+}
+
+// GetDeviceTasks 获取设备任务
+func GetDeviceTasks(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "设备ID不能为空"})
+		return
+	}
+
+	// 处理分页参数
+	page := 1
+	pageSize := 20
+	// 这里应该调用实际的服务层函数获取设备任务
+	// 目前返回模拟数据
+	tasks := []gin.H{
+		{"id": "1", "name": "系统扫描", "status": "completed", "progress": 100, "startTime": time.Now().Add(-2 * time.Hour).Format(time.RFC3339), "endTime": time.Now().Add(-1 * time.Hour).Format(time.RFC3339)},
+		{"id": "2", "name": "数据备份", "status": "in_progress", "progress": 75, "startTime": time.Now().Add(-30 * time.Minute).Format(time.RFC3339), "endTime": nil},
+		{"id": "3", "name": "软件更新", "status": "pending", "progress": 0, "startTime": nil, "endTime": nil},
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"deviceId": id,
+		"tasks": tasks,
+		"pagination": gin.H{
+			"page": page,
+			"pageSize": pageSize,
+			"total": 3,
+		},
+	})
+}

@@ -26,6 +26,8 @@ type ServerConfig struct {
 
 // DatabaseConfig 数据库配置
 type DatabaseConfig struct {
+	Type     string `yaml:"type"`     // 数据库类型，如 "sqlite", "mysql", "postgres"
+	Path     string `yaml:"path"`     // SQLite 数据库文件路径
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	User     string `yaml:"user"`
@@ -119,6 +121,12 @@ func loadFromEnv() {
 	}
 	if dbname := os.Getenv("DB_NAME"); dbname != "" {
 		GlobalConfig.Database.DBName = dbname
+	}
+	if dbType := os.Getenv("DB_TYPE"); dbType != "" {
+		GlobalConfig.Database.Type = dbType
+	}
+	if dbPath := os.Getenv("DB_PATH"); dbPath != "" {
+		GlobalConfig.Database.Path = dbPath
 	}
 
 	// JWT配置

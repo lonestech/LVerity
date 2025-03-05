@@ -17,7 +17,14 @@ func main() {
 	}
 
 	// 初始化数据库
-	if err := database.InitDB(); err != nil {
+	dbConfig := &database.Config{
+		DBPath: config.GetConfig().Database.Path,
+	}
+	// 如果路径为空，使用默认路径
+	if dbConfig.DBPath == "" {
+		dbConfig.DBPath = "data/lverity.db"
+	}
+	if err := database.InitDB(dbConfig); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
