@@ -536,3 +536,16 @@ func DeleteLicense(code string) error {
 	}
 	return nil
 }
+
+// GenerateLicenseKey 生成随机授权密钥
+func GenerateLicenseKey() (string, error) {
+	// 使用utils包中的随机字符串生成器生成授权密钥
+	// 生成格式为: XXXX-XXXX-XXXX-XXXX 的密钥
+	part1 := utils.RandomString(4)
+	part2 := utils.RandomString(4)
+	part3 := utils.RandomString(4)
+	part4 := utils.RandomString(4)
+	
+	key := fmt.Sprintf("%s-%s-%s-%s", part1, part2, part3, part4)
+	return key, nil
+}

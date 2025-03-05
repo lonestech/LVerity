@@ -18,7 +18,7 @@ func RegisterDevice(diskID, bios, motherboard, name string) (*model.Device, erro
 
 	// 创建新设备
 	device := &model.Device{
-		ID:          utils.GenerateUUID(),
+		ID:          utils.GenerateDeviceUUID(),
 		Name:        name,
 		DiskID:      diskID,
 		BIOS:        bios,
@@ -464,7 +464,7 @@ func RecordAbnormalBehavior(deviceID, behaviorType, description, level string, d
 	}
 
 	behavior := &model.AbnormalBehavior{
-		ID:          utils.GenerateUUID(),
+		ID:          utils.GenerateDeviceUUID(),
 		DeviceID:    deviceID,
 		Type:        behaviorType,
 		Description: description,
@@ -499,5 +499,81 @@ func BlockDeviceWithReason(deviceID string, reason string) error {
 	if result.RowsAffected == 0 {
 		return errors.New("device not found")
 	}
+	return nil
+}
+
+// ActivateDevice 激活设备
+func ActivateDevice(deviceID string) error {
+	device, err := GetDevice(deviceID)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	device.Status = model.DeviceStatusNormal
+	device.UpdatedAt = now
+
+	if err := database.GetDB().Save(device).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeactivateDevice 停用设备
+func DeactivateDevice(deviceID string) error {
+	device, err := GetDevice(deviceID)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	device.Status = model.DeviceStatusInactive
+	device.UpdatedAt = now
+
+	if err := database.GetDB().Save(device).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RestartDevice 重启设备
+func RestartDevice(deviceID string) error {
+	// 这里可能需要调用设备API或者发送重启指令
+	// 暂时只记录重启请求
+	device, err := GetDevice(deviceID)
+	if err != nil {
+		return err
+	}
+	
+	// 记录重启指令
+	now := time.Now()
+	device.LastCommandAt = &now
+	device.LastCommand = "restart"
+	device.UpdatedAt = now
+	
+	if err := database.GetDB().Save(device).Error; err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+// UnbindLicense 解绑设备授权
+func UnbindLicense(deviceID string) error {
+	device, err := GetDevice(deviceID)
+	if err != nil {
+		return err
+	}
+	
+	// 清除授权绑定信息
+	device.LicenseID = ""
+	device.UpdatedAt = time.Now()
+	
+	if err := database.GetDB().Save(device).Error; err != nil {
+		return err
+	}
+	
 	return nil
 }

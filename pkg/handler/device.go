@@ -525,3 +525,122 @@ func GetDeviceTasks(c *gin.Context) {
 		},
 	})
 }
+
+// ResetDeviceFilters 重置设备过滤条件
+func ResetDeviceFilters(c *gin.Context) {
+	// 这里是一个简单的API，主要用于前端重置操作
+	// 实际上不需要后端存储状态，因为过滤状态存在前端
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "设备过滤条件已重置",
+	})
+}
+
+// UnregisterDevice 注销设备
+func UnregisterDevice(c *gin.Context) {
+	deviceID := c.Param("id")
+	
+	// 获取设备
+	device, err := service.GetDevice(deviceID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": "设备不存在",
+			"error": err.Error(),
+		})
+		return
+	}
+	
+	// 解绑任何关联的授权
+	if device.LicenseID != "" {
+		if err := service.UnbindLicense(deviceID); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "解绑授权失败",
+				"error": err.Error(),
+			})
+			return
+		}
+	}
+	
+	// 将状态设置为注销
+	if err := service.DeactivateDevice(deviceID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "注销设备失败",
+			"error": err.Error(),
+		})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "设备已成功注销",
+	})
+}
+
+// BatchManageDevices 批量管理设备
+func BatchManageDevices(c *gin.Context) {
+	var req struct {
+		IDs    []string `json:"ids" binding:"required"`
+		Action string   `json:"action" binding:"required"`
+	}
+	
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "请求参数无效",
+			"error": err.Error(),
+		})
+		return
+	}
+	
+	var failedCount int
+	var successCount int
+	
+	for _, id := range req.IDs {
+		var err error
+		
+		switch req.Action {
+		case "activate":
+			err = service.ActivateDevice(id)
+		case "deactivate":
+			err = service.DeactivateDevice(id)
+		case "delete":
+			err = service.DeleteDevice(id)
+		case "unregister":
+			device, getErr := service.GetDevice(id)
+			if getErr != nil {
+				failedCount++
+				continue
+			}
+			
+			if device.LicenseID != "" {
+				service.UnbindLicense(id) // 忽略错误，继续后续操作
+			}
+			
+			err = service.DeactivateDevice(id)
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": "无效的操作类型",
+			})
+			return
+		}
+		
+		if err != nil {
+			failedCount++
+		} else {
+			successCount++
+		}
+	}
+	
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": fmt.Sprintf("批量操作完成: %d 成功, %d 失败", successCount, failedCount),
+		"data": gin.H{
+			"success": successCount,
+			"failed": failedCount,
+		},
+	})
+}

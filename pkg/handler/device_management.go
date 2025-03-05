@@ -183,6 +183,72 @@ func GetDeviceAbnormalBehaviors(c *gin.Context) {
 	c.JSON(http.StatusOK, behaviors)
 }
 
+// 设备管理相关处理器
+
+// ActivateDevice 激活设备
+func ActivateDevice(c *gin.Context) {
+	deviceID := c.Param("id")
+	if deviceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "设备ID不能为空"})
+		return
+	}
+
+	if err := service.ActivateDevice(deviceID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "设备已激活"})
+}
+
+// DeactivateDevice 停用设备
+func DeactivateDevice(c *gin.Context) {
+	deviceID := c.Param("id")
+	if deviceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "设备ID不能为空"})
+		return
+	}
+
+	if err := service.DeactivateDevice(deviceID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "设备已停用"})
+}
+
+// RestartDevice 重启设备
+func RestartDevice(c *gin.Context) {
+	deviceID := c.Param("id")
+	if deviceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "设备ID不能为空"})
+		return
+	}
+
+	if err := service.RestartDevice(deviceID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "重启指令已发送"})
+}
+
+// UnbindLicense 解绑设备授权
+func UnbindLicense(c *gin.Context) {
+	deviceID := c.Param("id")
+	if deviceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "设备ID不能为空"})
+		return
+	}
+
+	if err := service.UnbindLicense(deviceID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "设备授权已解绑"})
+}
+
 // 设备监控相关处理器
 
 // GetDeviceMonitorStatus 获取设备监控状态

@@ -627,3 +627,34 @@ func DeleteLicense(c *gin.Context) {
         },
     })
 }
+
+// GenerateLicenseKey 生成随机授权密钥
+func GenerateLicenseKey(c *gin.Context) {
+	// 使用授权服务生成随机密钥
+	key, err := service.GenerateLicenseKey()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "生成授权密钥失败",
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"key": key,
+		},
+	})
+}
+
+// ResetLicenseFilters 重置授权过滤条件
+func ResetLicenseFilters(c *gin.Context) {
+	// 这里是一个简单的API，主要用于前端重置操作
+	// 实际上不需要后端存储状态，因为过滤状态存在前端
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "过滤条件已重置",
+	})
+}

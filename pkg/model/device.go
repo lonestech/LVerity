@@ -15,6 +15,7 @@ const (
 	DeviceStatusSuspect  = "suspect"  // 可疑
 	DeviceStatusDisabled = "disabled" // 已禁用
 	DeviceStatusUnknown  = "unknown"  // 未知状态
+	DeviceStatusInactive = "inactive" // 已停用
 )
 
 // UsageStats 设备使用统计
@@ -53,6 +54,9 @@ type Device struct {
 	HeartbeatRate   int            `gorm:"column:heartbeat_rate;default:60" json:"heartbeat_rate"`
 	LastHeartbeat   *time.Time     `gorm:"column:last_heartbeat" json:"last_heartbeat"`
 	LastSeen        *time.Time     `gorm:"column:last_seen" json:"last_seen"`
+	LastCommandAt   *time.Time     `gorm:"column:last_command_at" json:"last_command_at"`
+	LastCommand     string         `gorm:"column:last_command;type:varchar(50)" json:"last_command"`
+	LicenseID       string         `gorm:"column:license_id;type:varchar(191)" json:"license_id"`
 	UsageStats      *UsageStats    `gorm:"-" json:"usage_stats,omitempty"`
 	Metadata        string         `gorm:"column:metadata;type:text" json:"metadata"`
 	CreatedAt       time.Time      `gorm:"type:timestamp" json:"created_at"`

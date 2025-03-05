@@ -108,6 +108,11 @@ func SetupRouter() *gin.Engine {
 			system.GET("/info/detail", handler.GetSystemInfoDetail)  // 详细系统信息
 			system.POST("/info/update", handler.UpdateSystemInfoDetail) // 更新系统信息
 			system.GET("/logs", handler.GetSystemLogsList)           // 获取系统日志
+			system.POST("/logs/clear", handler.ClearSystemLogs)     // 清理系统日志
+			system.GET("/logs/export", handler.ExportSystemLogs)    // 导出系统日志
+			system.POST("/logs/batch-delete", handler.BatchDeleteSystemLogs) // 批量删除系统日志
+			system.GET("/logs/config", handler.GetLogConfig)        // 获取日志配置
+			system.PUT("/logs/config", handler.UpdateLogConfig)     // 更新日志配置
 			system.GET("/status", handler.GetSystemStatus)           // 获取系统状态
 			system.POST("/restart", handler.RestartSystem)           // 重启系统
 			system.GET("/check-update", handler.CheckUpdate)         // 检查更新
@@ -151,6 +156,10 @@ func SetupRouter() *gin.Engine {
 		api.PUT("/licenses/:id", handler.UpdateLicense)
 		api.DELETE("/licenses/:id", handler.DeleteLicense)
 		api.GET("/licenses/stats", handler.GetLicenseStats)
+		api.GET("/licenses/generate-key", handler.GenerateLicenseKey)
+		api.POST("/licenses/export", handler.ExportLicenses)
+		api.POST("/licenses/reset-filters", handler.ResetLicenseFilters)
+		api.POST("/licenses/batch-generate", handler.BatchGenerateLicense)
 
 		// 设备管理路由
 		devices := api.Group("/devices")
@@ -170,6 +179,13 @@ func SetupRouter() *gin.Engine {
 			devices.GET("/:id/usage-report", handler.GetDeviceUsageReport) // 获取使用报告
 			devices.GET("/:id/info", handler.GetDeviceInfo)          // 获取详细信息
 			devices.PUT("/:id/metadata", handler.UpdateDeviceMetadata) // 更新元数据
+			devices.POST("/:id/activate", handler.ActivateDevice)     // 激活设备
+			devices.POST("/:id/deactivate", handler.DeactivateDevice) // 停用设备
+			devices.POST("/:id/restart", handler.RestartDevice)       // 重启设备
+			devices.POST("/:id/unregister", handler.UnregisterDevice) // 注销设备
+			devices.POST("/:id/unbind-license", handler.UnbindLicense) // 解绑授权
+			devices.POST("/reset-filters", handler.ResetDeviceFilters) // 重置过滤条件
+			devices.POST("/batch", handler.BatchManageDevices)       // 批量管理设备
 
 			// 设备分组管理
 			devices.POST("/groups", handler.CreateGroup)             // 创建分组

@@ -30,8 +30,8 @@ func GenerateFingerprint(diskID, bios, motherboard string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-// GenerateUUID 生成UUID
-func GenerateUUID() string {
+// GenerateDeviceUUID 生成UUID
+func GenerateDeviceUUID() string {
 	uuid := make([]byte, 16)
 	_, err := rand.Read(uuid)
 	if err != nil {
