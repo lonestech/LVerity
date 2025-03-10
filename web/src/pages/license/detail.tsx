@@ -29,12 +29,15 @@ import {
   InfoCircleOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from 'react-query';
 import PageContainer from '../../components/PageContainer';
 import StatusTag from '../../components/StatusTag';
 import DetailCard from '../../components/DetailCard';
+import LicenseActivationManager from '../../components/LicenseActivationManager';
 import { licenseService } from '../../services/license';
 import { License, LicenseActivation } from '../../models/license';
 import { formatDateTime } from '../../utils/utils';
+import { useLicenseActivations } from '../../hooks/useLicenseActivations';
 
 const { Text, Title } = Typography;
 const { TabPane } = Tabs;
@@ -42,50 +45,56 @@ const { TabPane } = Tabs;
 const LicenseDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [license, setLicense] = useState<License | null>(null);
-  const [activations, setActivations] = useState<LicenseActivation[]>([]);
   const [activeTab, setActiveTab] = useState<string>('basic');
-
-  // 加载许可证数据
-  const loadLicenseData = async () => {
-    if (!id) return;
-    
-    setLoading(true);
-    try {
+  
+  // 使用React Query获取许可证详情
+  const { 
+    data: license, 
+    isLoading: isLoadingLicense, 
+    refetch: refetchLicense
+  } = useQuery<License, Error>(
+    ['license', id],
+    async () => {
+      if (!id) throw new Error('许可证ID不能为空');
       const response = await licenseService.getLicenseById(id);
-      if (response.success) {
-        setLicense(response.data);
-      } else {
-        message.error(response.message || '加载许可证信息失败');
+      if (!response.success) {
+        throw new Error(response.message || '获取许可证详情失败');
       }
-    } catch (error) {
-      console.error('加载许可证信息失败:', error);
-      message.error('加载许可证信息失败');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 加载许可证激活记录
-  const loadActivations = async () => {
-    if (!id) return;
-    
-    try {
-      const response = await licenseService.getLicenseActivations(id);
-      if (response.success) {
-        setActivations(response.data);
+      
+      // 处理响应数据，确保前端字段名存在
+      const licenseData = response.data;
+      
+      // 字段映射处理
+      licenseData.key = licenseData.key || licenseData.code;
+      licenseData.startDate = licenseData.startDate || licenseData.start_time;
+      licenseData.expiryDate = licenseData.expiryDate || licenseData.expire_time;
+      licenseData.maxActivations = licenseData.maxActivations || licenseData.usage_limit || licenseData.max_devices;
+      licenseData.activationCount = licenseData.activationCount || licenseData.usage_count;
+      licenseData.customerId = licenseData.customerId || licenseData.group_id;
+      licenseData.createdAt = licenseData.createdAt || licenseData.created_at;
+      licenseData.updatedAt = licenseData.updatedAt || licenseData.updated_at;
+      licenseData.notes = licenseData.notes || licenseData.description;
+      
+      console.log('处理后的许可证数据:', licenseData);
+      
+      return licenseData;
+    },
+    {
+      enabled: !!id,
+      refetchOnWindowFocus: false,
+      retry: 1,
+      onError: (error) => {
+        message.error(error.message || '获取许可证详情失败');
       }
-    } catch (error) {
-      console.error('加载激活记录失败:', error);
     }
-  };
-
-  // 组件加载时获取数据
-  useEffect(() => {
-    loadLicenseData();
-    loadActivations();
-  }, [id]);
+  );
+  
+  // 使用自定义钩子获取激活记录
+  const {
+    data: activations = [],
+    isLoading: isLoadingActivations,
+    refetch: refetchActivations
+  } = useLicenseActivations(id);
 
   // 处理标签页切换
   const handleTabChange = (key: string) => {
@@ -100,8 +109,8 @@ const LicenseDetailPage: React.FC = () => {
       const response = await licenseService.activateLicense(id);
       if (response.success) {
         message.success('许可证激活成功');
-        loadLicenseData();
-        loadActivations();
+        refetchLicense();
+        refetchActivations();
       } else {
         message.error(response.message || '许可证激活失败');
       }
@@ -119,8 +128,8 @@ const LicenseDetailPage: React.FC = () => {
       const response = await licenseService.suspendLicense(id);
       if (response.success) {
         message.success('许可证已暂停');
-        loadLicenseData();
-        loadActivations();
+        refetchLicense();
+        refetchActivations();
       } else {
         message.error(response.message || '许可证暂停失败');
       }
@@ -146,6 +155,12 @@ const LicenseDetailPage: React.FC = () => {
       console.error('许可证删除失败:', error);
       message.error('许可证删除失败');
     }
+  };
+
+  // 标签页内容 - 激活记录
+  const renderActivationsTab = () => {
+    if (!id) return null;
+    return <LicenseActivationManager licenseId={id} />;
   };
 
   // 激活记录列配置
@@ -212,7 +227,7 @@ const LicenseDetailPage: React.FC = () => {
   return (
     <PageContainer 
       title="许可证详情" 
-      loading={loading}
+      loading={isLoadingLicense || isLoadingActivations}
       backPath="/license"
       extra={
         <Space>
@@ -237,7 +252,7 @@ const LicenseDetailPage: React.FC = () => {
           <Button 
             type="primary" 
             icon={<EditOutlined />} 
-            onClick={() => navigate(`/license/edit/${id}`)}
+            onClick={() => navigate(`/license/form/${id}`)}
           >
             编辑许可证
           </Button>
@@ -292,7 +307,7 @@ const LicenseDetailPage: React.FC = () => {
               >
                 <Statistic 
                   title="客户名称" 
-                  value={license.customerName} 
+                  value={license.customerName || '未分配'} 
                   valueStyle={{ fontSize: '16px' }} 
                 />
                 {license.customerContact && (
@@ -318,7 +333,7 @@ const LicenseDetailPage: React.FC = () => {
               >
                 <Statistic 
                   title="产品名称" 
-                  value={license.productName} 
+                  value={license.productName || '未分配'} 
                   valueStyle={{ fontSize: '16px' }} 
                 />
                 <div style={{ marginTop: 16 }}>
@@ -375,8 +390,8 @@ const LicenseDetailPage: React.FC = () => {
                       <Descriptions.Item label="状态">
                         <StatusTag status={license.status} />
                       </Descriptions.Item>
-                      <Descriptions.Item label="客户">{license.customerName}</Descriptions.Item>
-                      <Descriptions.Item label="产品">{license.productName}</Descriptions.Item>
+                      <Descriptions.Item label="客户">{license.customerName || '未分配'}</Descriptions.Item>
+                      <Descriptions.Item label="产品">{license.productName || '未分配'}</Descriptions.Item>
                       <Descriptions.Item label="版本">{license.version || '-'}</Descriptions.Item>
                       <Descriptions.Item label="开始日期">
                         {license.startDate ? formatDateTime(license.startDate).split(' ')[0] : '不限'}
@@ -420,6 +435,16 @@ const LicenseDetailPage: React.FC = () => {
                       pagination={{ pageSize: 10 }}
                     />
                   )
+                },
+                {
+                  key: 'activationsDetail',
+                  label: (
+                    <span>
+                      <HistoryOutlined />
+                      激活记录详情
+                    </span>
+                  ),
+                  children: renderActivationsTab()
                 }
               ]}
             />

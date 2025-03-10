@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"gorm.io/gorm"
 )
 
 // GenerateLicense 生成授权码
@@ -444,9 +445,13 @@ func AddTagsToLicense(licenseID string, tagIDs []string) error {
 }
 
 // UpdateLicenseMetadata 更新授权码元数据
-func UpdateLicenseMetadata(code string, metadata string) error {
+func UpdateLicenseMetadata(id string, metadata string) error {
+	if id == "" {
+		return errors.New("license id cannot be empty")
+	}
+	
 	result := database.GetDB().Model(&model.License{}).
-		Where("code = ?", code).
+		Where("id = ?", id).
 		Update("metadata", metadata)
 
 	if result.Error != nil {
@@ -526,8 +531,12 @@ func GetLicenseByCode(code string) (*model.License, error) {
 }
 
 // DeleteLicense 删除授权码
-func DeleteLicense(code string) error {
-	result := database.GetDB().Delete(&model.License{}, "code = ?", code)
+func DeleteLicense(id string) error {
+	if id == "" {
+		return errors.New("license id cannot be empty")
+	}
+	
+	result := database.GetDB().Delete(&model.License{}, "id = ?", id)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -548,4 +557,147 @@ func GenerateLicenseKey() (string, error) {
 	
 	key := fmt.Sprintf("%s-%s-%s-%s", part1, part2, part3, part4)
 	return key, nil
+}
+
+// GetLicenseByID 根据ID获取授权码
+func GetLicenseByID(id string) (*model.License, error) {
+	if id == "" {
+		return nil, errors.New("license id cannot be empty")
+	}
+	
+	var license model.License
+	result := database.GetDB().Where("id = ?", id).First(&license)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, errors.New("license not found")
+		}
+		return nil, result.Error
+	}
+	
+	// 处理 Features 字段，与GetLicenseByCode保持一致
+	if license.FeaturesStr != "" {
+		if err := json.Unmarshal([]byte(license.FeaturesStr), &license.Features); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal features: %v", err)
+		}
+	}
+	
+	return &license, nil
+}
+
+// GetLicenseActivationsByID 根据许可证ID获取激活记录
+func GetLicenseActivationsByID(licenseID string) ([]model.LicenseActivation, error) {
+	db := database.GetDB()
+	
+	// 先检查许可证是否存在
+	var license model.License
+	if err := db.Where("id = ?", licenseID).First(&license).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("许可证不存在")
+		}
+		return nil, fmt.Errorf("查询许可证失败: %w", err)
+	}
+	
+	// 查询许可证激活记录
+	var activations []model.LicenseActivation
+	
+	// 创建模型结构体
+	type ActivationRecord struct {
+		ID          string    `json:"id"`
+		LicenseID   string    `json:"license_id"`
+		DeviceID    string    `json:"device_id"`
+		DeviceName  string    `json:"device_name"`
+		ActivatedAt time.Time `json:"activated_at"`
+		Status      string    `json:"status"`
+		IPAddress   string    `json:"ip_address"`
+		Location    string    `json:"location"`
+		CreatedAt   time.Time `json:"created_at"`
+	}
+	
+	// 查询激活历史记录
+	var records []ActivationRecord
+	if err := db.Table("license_activations").
+		Select("license_activations.*, devices.name as device_name").
+		Joins("LEFT JOIN devices ON license_activations.device_id = devices.id").
+		Where("license_activations.license_id = ?", licenseID).
+		Order("license_activations.created_at DESC").
+		Find(&records).Error; err != nil {
+		return nil, fmt.Errorf("查询激活记录失败: %w", err)
+	}
+	
+	// 转换为模型数据
+	for _, record := range records {
+		activation := model.LicenseActivation{
+			ID:          record.ID,
+			LicenseID:   record.LicenseID,
+			DeviceID:    record.DeviceID,
+			DeviceName:  record.DeviceName,
+			ActivatedAt: record.ActivatedAt,
+			Status:      record.Status,
+			IPAddress:   record.IPAddress,
+			Location:    record.Location,
+			CreatedAt:   record.CreatedAt,
+		}
+		activations = append(activations, activation)
+	}
+	
+	// 如果没有记录，返回空数组
+	if activations == nil {
+		activations = []model.LicenseActivation{}
+	}
+	
+	return activations, nil
+}
+
+// UpdateLicenseComprehensive 全面更新许可证信息
+func UpdateLicenseComprehensive(license model.License) (*model.License, error) {
+	if license.ID == "" {
+		return nil, errors.New("许可证ID不能为空")
+	}
+
+	// 先获取现有的许可证
+	var existingLicense model.License
+	if err := database.GetDB().Where("id = ?", license.ID).First(&existingLicense).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("许可证不存在")
+		}
+		return nil, fmt.Errorf("查询许可证失败: %v", err)
+	}
+
+	// 序列化功能列表
+	featuresJSON, err := json.Marshal(license.Features)
+	if err != nil {
+		return nil, fmt.Errorf("序列化功能列表失败: %v", err)
+	}
+
+	// 更新字段，保留不应由用户修改的字段
+	updatedLicense := model.License{
+		ID:          existingLicense.ID,
+		Code:        license.Code,
+		Status:      license.Status,
+		GroupID:     license.GroupID,  // 对应前端的customerId
+		Type:        license.Type,
+		MaxDevices:  license.MaxDevices,
+		Features:    license.Features,
+		FeaturesStr: string(featuresJSON),
+		Description: license.Description, // 对应前端的notes
+		// 移除了前端中不存在的Version字段
+		UsageLimit:  license.UsageLimit, // 对应前端的maxActivations
+		CreatedAt:   existingLicense.CreatedAt, // 保留创建时间
+		UpdatedAt:   time.Now(),                // 更新时间为当前时间
+	}
+
+	// 处理日期
+	if !license.StartTime.IsZero() {
+		updatedLicense.StartTime = license.StartTime
+	}
+	if !license.ExpireTime.IsZero() {
+		updatedLicense.ExpireTime = license.ExpireTime
+	}
+
+	// 保存更新后的许可证
+	if err := database.GetDB().Save(&updatedLicense).Error; err != nil {
+		return nil, fmt.Errorf("保存许可证失败: %v", err)
+	}
+
+	return &updatedLicense, nil
 }

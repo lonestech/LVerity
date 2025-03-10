@@ -153,16 +153,17 @@ func SetupRouter() *gin.Engine {
 		api.DELETE("/products/:id", handler.DeleteProduct)
 
 		// 授权管理
-		api.GET("/licenses", handler.ListLicenses)
-		api.POST("/licenses", handler.CreateLicense)
-		api.GET("/licenses/:id", handler.GetLicense)
-		api.PUT("/licenses/:id", handler.UpdateLicense)
-		api.DELETE("/licenses/:id", handler.DeleteLicense)
 		api.GET("/licenses/stats", handler.GetLicenseStats)
 		api.GET("/licenses/generate-key", handler.GenerateLicenseKey)
 		api.POST("/licenses/export", handler.ExportLicenses)
 		api.POST("/licenses/reset-filters", handler.ResetLicenseFilters)
 		api.POST("/licenses/batch-generate", handler.BatchGenerateLicense)
+		api.GET("/licenses", handler.ListLicenses)
+		api.POST("/licenses", handler.CreateLicense)
+		api.GET("/licenses/:id", handler.GetLicense)
+		api.PUT("/licenses/:id", handler.UpdateLicense)
+		api.DELETE("/licenses/:id", handler.DeleteLicense)
+		api.GET("/licenses/:id/activations", handler.GetLicenseActivations) // 获取许可证激活记录
 
 		// 设备管理路由
 		devices := api.Group("/devices")

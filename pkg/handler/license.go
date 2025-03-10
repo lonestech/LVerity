@@ -561,9 +561,9 @@ func CreateLicense(c *gin.Context) {
 
 // GetLicense 获取授权码详情
 func GetLicense(c *gin.Context) {
-    code := c.Param("code")
+    id := c.Param("id")
     
-    license, err := service.GetLicenseByCode(code)
+    license, err := service.GetLicenseByID(id)
     if err != nil {
         c.JSON(http.StatusNotFound, gin.H{
             "success": false,
@@ -580,38 +580,49 @@ func GetLicense(c *gin.Context) {
 
 // UpdateLicense 更新授权码
 func UpdateLicense(c *gin.Context) {
-    code := c.Param("code")
-    var req UpdateLicenseMetadataRequest
-    if err := c.ShouldBindJSON(&req); err != nil {
+    id := c.Param("id")
+    if id == "" {
         c.JSON(http.StatusBadRequest, gin.H{
             "success": false,
-            "error_message": err.Error(),
+            "message": "许可证ID不能为空",
         })
         return
     }
     
-    err := service.UpdateLicenseMetadata(code, req.Metadata)
+    var license model.License
+    if err := c.ShouldBindJSON(&license); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{
+            "success": false,
+            "message": "请求数据无效: " + err.Error(),
+        })
+        return
+    }
+    
+    // 确保ID匹配
+    license.ID = id
+    
+    // 调用服务更新许可证
+    updatedLicense, err := service.UpdateLicenseComprehensive(license)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{
             "success": false,
-            "error_message": err.Error(),
+            "message": "更新许可证失败: " + err.Error(),
         })
         return
     }
     
     c.JSON(http.StatusOK, gin.H{
         "success": true,
-        "data": gin.H{
-            "message": "License updated successfully",
-        },
+        "message": "许可证更新成功",
+        "data": updatedLicense,
     })
 }
 
 // DeleteLicense 删除授权码
 func DeleteLicense(c *gin.Context) {
-    code := c.Param("code")
+    id := c.Param("id")
     
-    err := service.DeleteLicense(code)
+    err := service.DeleteLicense(id)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{
             "success": false,
@@ -656,5 +667,36 @@ func ResetLicenseFilters(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "过滤条件已重置",
+	})
+}
+
+// GetLicenseActivations 获取许可证激活记录
+func GetLicenseActivations(c *gin.Context) {
+	licenseID := c.Param("id")
+	if licenseID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "许可证ID不能为空",
+			"code":    400,
+		})
+		return
+	}
+
+	// 获取许可证激活记录
+	activations, err := service.GetLicenseActivationsByID(licenseID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "获取许可证激活记录失败: " + err.Error(),
+			"code":    500,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "获取许可证激活记录成功",
+		"code":    200,
+		"data":    activations,
 	})
 }

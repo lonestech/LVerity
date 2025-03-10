@@ -54,6 +54,7 @@ func InitDB(config *Config) error {
 			&model.RolePermission{},
 			&model.UserRole{},
 			&model.License{},
+			&model.LicenseActivation{}, // 添加许可证激活记录模型
 			&model.Device{},
 			&model.DeviceGroup{},
 			&model.DeviceLog{},

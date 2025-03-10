@@ -86,6 +86,25 @@ type License struct {
 	UsageCount  int64         `json:"usage_count" gorm:"default:0"` // 新增：已使用次数
 }
 
+// LicenseActivation 许可证激活记录
+type LicenseActivation struct {
+	ID          string    `json:"id" gorm:"primaryKey"`
+	LicenseID   string    `json:"license_id" gorm:"index"`
+	DeviceID    string    `json:"device_id" gorm:"index"`
+	DeviceName  string    `json:"device_name" gorm:"-"` // 非数据库字段，用于关联查询
+	ActivatedAt time.Time `json:"activated_at"`
+	Status      string    `json:"status" gorm:"type:varchar(20)"`
+	IPAddress   string    `json:"ip_address" gorm:"type:varchar(50)"`
+	Location    string    `json:"location" gorm:"type:varchar(100)"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// TableName 指定表名
+func (LicenseActivation) TableName() string {
+	return "license_activations"
+}
+
 // LicenseUsage 授权使用记录
 type LicenseUsage struct {
 	ID         string    `json:"id" gorm:"primaryKey"`
