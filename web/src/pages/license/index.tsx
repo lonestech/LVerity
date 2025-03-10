@@ -354,16 +354,12 @@ const LicensePage: React.FC = () => {
             <Button 
               key="reset" 
               onClick={() => {
-                reset();
-                // 清除所有筛选条件，重新加载数据
-                form.resetFields();
-                actionRef.current?.reload();
-                // 调用后端的重置过滤器接口
-                licenseService.resetLicenseFilters().then(() => {
-                  message.success('已重置所有过滤条件');
-                }).catch(error => {
-                  console.error('重置过滤条件失败:', error);
-                });
+                // 检查reset是否为函数再调用
+                if (typeof reset === 'function') {
+                  reset();
+                }
+                // 使用已定义的handleResetFilters函数处理重置操作
+                handleResetFilters();
               }}
             >
               {resetText}

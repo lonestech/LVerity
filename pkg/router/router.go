@@ -85,19 +85,8 @@ func SetupRouter() *gin.Engine {
 		api.POST("/user/profile", handler.UpdateUserProfile)
 		api.POST("/user/avatar", handler.UploadAvatar)
 		
-		// 根据开发模式决定是否需要特殊处理修改密码
-		if devMode {
-			// 开发模式下，为了避免dev-user-id不存在的问题，使用特殊处理
-			api.POST("/user/change-password", func(c *gin.Context) {
-				// 在开发模式下，直接返回成功
-				c.JSON(http.StatusOK, gin.H{
-					"success": true,
-					"message": "开发模式下密码修改成功",
-				})
-			})
-		} else {
-			api.POST("/user/change-password", handler.ChangePassword)
-		}
+		// 修改密码功能，无论开发模式还是生产模式都使用实际的处理函数
+		api.POST("/user/change-password", handler.ChangePassword)
 
 		// 角色管理
 		api.GET("/roles", handler.GetAllRoles)
