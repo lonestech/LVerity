@@ -33,4 +33,4 @@
 # 其他
 .DS_Store
 Thumbs.db
-web/node_modules/*
+web/node_modules

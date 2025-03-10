@@ -23,8 +23,8 @@ const PasswordChange: React.FC = () => {
     setLoading(true);
     try {
       const params: ChangePasswordParams = {
-        oldPassword: values.oldPassword,
-        newPassword: values.newPassword,
+        old_password: values.oldPassword,
+        new_password: values.newPassword,
       };
 
       const response = await userService.changePassword(params);
