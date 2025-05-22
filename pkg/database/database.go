@@ -67,6 +67,11 @@ func InitDB(config *Config) error {
 			&model.SystemBackup{}, // 系统备份模型
 			&model.BackupConfig{}, // 备份配置模型
 			&model.SystemConfig{}, // 系统配置模型
+			&model.LicenseTag{},
+			&model.LicenseUsage{},
+			&model.DeviceLocation{},
+			&model.AbnormalBehavior{},
+			&model.BlacklistRule{},
 		)
 
 		if err != nil {
@@ -104,43 +109,5 @@ func CloseDB() error {
 		DB = nil
 		log.Println("数据库连接已关闭")
 	}
-	return nil
-}
-
-// autoMigrate 自动迁移数据库结构
-func autoMigrate() error {
-	log.Println("开始数据库迁移...")
-	
-	// 基础表
-	if err := DB.AutoMigrate(
-		&model.User{},
-		&model.Role{},
-		&model.Permission{},
-		&model.Device{},
-		&model.LicenseTag{},
-	); err != nil {
-		return fmt.Errorf("迁移基础模型失败: %v", err)
-	}
-
-	// 关联表
-	if err := DB.AutoMigrate(
-		&model.RolePermission{},
-		&model.UserRole{},
-		&model.License{},
-		&model.LicenseUsage{},
-	); err != nil {
-		return fmt.Errorf("迁移关联模型失败: %v", err)
-	}
-
-	// 其他表
-	if err := DB.AutoMigrate(
-		&model.DeviceLocation{},
-		&model.AbnormalBehavior{},
-		&model.BlacklistRule{},
-	); err != nil {
-		return fmt.Errorf("迁移其他模型失败: %v", err)
-	}
-
-	log.Println("数据库迁移完成")
 	return nil
 }
