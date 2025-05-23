@@ -250,6 +250,38 @@ definitions:
         example: 100
         type: integer
     type: object
+  LVerity_pkg_model.Product:
+    properties:
+      createdAt:
+        type: string
+      customAttributes:
+        description: New field
+        items:
+          type: integer
+        type: array
+      description:
+        type: string
+      features:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  LVerity_pkg_model.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        example: Operation completed successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
   LVerity_pkg_model.UsageStats:
     properties:
       average_usage_time:
@@ -326,6 +358,23 @@ definitions:
     - message
     - type
     type: object
+  pkg_handler.CreateProductRequest:
+    properties:
+      customAttributes:
+        additionalProperties: true
+        description: New field
+        type: object
+      description:
+        type: string
+      features:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+    required:
+    - name
+    type: object
   pkg_handler.ErrorResponse:
     properties:
       error:
@@ -356,6 +405,21 @@ definitions:
     required:
     - latitude
     - longitude
+    type: object
+  pkg_handler.UpdateProductRequest:
+    properties:
+      customAttributes:
+        additionalProperties: true
+        description: New field
+        type: object
+      description:
+        type: string
+      features:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -766,6 +830,182 @@ paths:
       summary: Get device details
       tags:
       - devices
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all products.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of products
+          schema:
+            allOf:
+            - $ref: '#/definitions/LVerity_pkg_model.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/LVerity_pkg_model.Product'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Add a new product to the system, including custom attributes.
+      parameters:
+      - description: Product information including custom attributes
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/pkg_handler.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Product created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/LVerity_pkg_model.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/LVerity_pkg_model.Product'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new product
+      tags:
+      - products
+  /products/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a product by its ID.
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product deleted successfully
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.SuccessResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a product
+      tags:
+      - products
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific product by its ID.
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product details
+          schema:
+            allOf:
+            - $ref: '#/definitions/LVerity_pkg_model.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/LVerity_pkg_model.Product'
+              type: object
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a product by ID
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Update details of an existing product by its ID, including custom
+        attributes.
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product information to update
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/pkg_handler.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/LVerity_pkg_model.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/LVerity_pkg_model.Product'
+              type: object
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update an existing product
+      tags:
+      - products
   /users:
     get:
       consumes:

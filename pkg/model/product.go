@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
+
+	"gorm.io/datatypes" // New import
 )
 
 // StringArray 字符串数组类型，用于存储产品特性
@@ -28,11 +30,12 @@ func (a *StringArray) Scan(value interface{}) error {
 // Product 产品模型
 type Product struct {
 	ID          string      `json:"id" gorm:"primaryKey"`
-	Name        string      `json:"name" gorm:"not null"`
-	Description string      `json:"description"`
-	Features    StringArray `json:"features" gorm:"type:json"`
-	CreatedAt   time.Time   `json:"createdAt" gorm:"autoCreateTime"`
-	UpdatedAt   time.Time   `json:"updatedAt" gorm:"autoUpdateTime"`
+	Name              string         `json:"name" gorm:"not null"`
+	Description       string         `json:"description"`
+	Features          StringArray    `json:"features" gorm:"type:json"`
+	CustomAttributes  datatypes.JSON `json:"customAttributes,omitempty" gorm:"type:jsonb"` // New field
+	CreatedAt         time.Time      `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt         time.Time      `json:"updatedAt" gorm:"autoUpdateTime"`
 }
 
 // TableName 指定表名
