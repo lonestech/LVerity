@@ -135,3 +135,27 @@ type DeviceLocation struct {
 func (Device) TableName() string {
 	return "devices"
 }
+
+// PaginatedDevicesResponse represents a paginated list of devices.
+type PaginatedDevicesResponse struct {
+	Data  []Device `json:"data"`
+	Total int64    `json:"total" example:"100"`
+	Page  int      `json:"page" example:"1"`
+	Limit int      `json:"limit" example:"10"`
+}
+
+// CreateDeviceRequest represents the request body for creating a new device.
+// Based on the existing RegisterDeviceRequest in handler.
+type CreateDeviceRequest struct {
+	Name        string `json:"name" binding:"required" example:"My New Device"`
+	Type        string `json:"type" example:"Laptop"` // Added type as it's a common field
+	Description string `json:"description,omitempty" example:"Office laptop"` // Added description
+	DiskID      string `json:"disk_id,omitempty" example:"SATA_DISK_123"`
+	BIOS        string `json:"bios,omitempty" example:"BIOS_VERSION_XYZ"`
+	Motherboard string `json:"motherboard,omitempty" example:"MOTHERBOARD_ABC"`
+	GroupID     string `json:"group_id,omitempty" example:"group-uuid-123"` // Added GroupID
+}
+
+// DeviceResponse is an alias for Device, used for response consistency in Swagger.
+// For actual responses, model.Device will be used directly.
+// type DeviceResponse model.Device // This is a conceptual alias for swagger reference.

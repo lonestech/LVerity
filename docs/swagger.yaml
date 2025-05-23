@@ -1,0 +1,804 @@
+basePath: /api
+definitions:
+  LVerity_pkg_model.Alert:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      device_id:
+        type: string
+      id:
+        type: string
+      level:
+        $ref: '#/definitions/LVerity_pkg_model.AlertLevel'
+      metadata:
+        type: string
+      resolved_at:
+        type: string
+      resolved_by:
+        type: string
+      status:
+        $ref: '#/definitions/LVerity_pkg_model.AlertStatus'
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  LVerity_pkg_model.AlertLevel:
+    enum:
+    - info
+    - warning
+    - error
+    - critical
+    type: string
+    x-enum-comments:
+      AlertLevelCritical: 严重
+      AlertLevelError: 错误
+      AlertLevelInfo: 信息
+      AlertLevelWarning: 警告
+    x-enum-varnames:
+    - AlertLevelInfo
+    - AlertLevelWarning
+    - AlertLevelError
+    - AlertLevelCritical
+  LVerity_pkg_model.AlertStatus:
+    enum:
+    - open
+    - closed
+    - resolved
+    type: string
+    x-enum-varnames:
+    - AlertStatusOpen
+    - AlertStatusClosed
+    - AlertStatusResolved
+  LVerity_pkg_model.CreateDeviceRequest:
+    properties:
+      bios:
+        example: BIOS_VERSION_XYZ
+        type: string
+      description:
+        description: Added description
+        example: Office laptop
+        type: string
+      disk_id:
+        example: SATA_DISK_123
+        type: string
+      group_id:
+        description: Added GroupID
+        example: group-uuid-123
+        type: string
+      motherboard:
+        example: MOTHERBOARD_ABC
+        type: string
+      name:
+        example: My New Device
+        type: string
+      type:
+        description: Added type as it's a common field
+        example: Laptop
+        type: string
+    required:
+    - name
+    type: object
+  LVerity_pkg_model.Device:
+    properties:
+      alert_count:
+        type: integer
+      bios:
+        type: string
+      block_reason:
+        type: string
+      block_time:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      disk_id:
+        type: string
+      display_card:
+        type: string
+      group:
+        $ref: '#/definitions/LVerity_pkg_model.DeviceGroup'
+      group_id:
+        type: string
+      heartbeat_rate:
+        type: integer
+      id:
+        type: string
+      language:
+        type: string
+      last_alert_time:
+        type: string
+      last_command:
+        type: string
+      last_command_at:
+        type: string
+      last_heartbeat:
+        type: string
+      last_seen:
+        type: string
+      license_id:
+        type: string
+      metadata:
+        type: string
+      motherboard:
+        type: string
+      name:
+        type: string
+      network_cards:
+        type: string
+      resolution:
+        type: string
+      risk_level:
+        type: number
+      status:
+        type: string
+      timezone:
+        type: string
+      type:
+        type: string
+      unblock_time:
+        type: string
+      updated_at:
+        type: string
+      usage_stats:
+        $ref: '#/definitions/LVerity_pkg_model.UsageStats'
+    type: object
+  LVerity_pkg_model.DeviceGroup:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      devices:
+        items:
+          $ref: '#/definitions/LVerity_pkg_model.Device'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  LVerity_pkg_model.DeviceLocationLog:
+    properties:
+      device_id:
+        type: string
+      id:
+        type: string
+      location:
+        $ref: '#/definitions/LVerity_pkg_model.Location'
+      timestamp:
+        type: string
+    type: object
+  LVerity_pkg_model.ErrorResponse:
+    properties:
+      error:
+        example: An error occurred
+        type: string
+      message:
+        example: Detailed error message
+        type: string
+    type: object
+  LVerity_pkg_model.Location:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  LVerity_pkg_model.LoginRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: admin
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  LVerity_pkg_model.LoginResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/LVerity_pkg_model.User'
+        description: Assuming User struct is defined in user.go or another model file
+    type: object
+  LVerity_pkg_model.PaginatedDevicesResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/LVerity_pkg_model.Device'
+        type: array
+      limit:
+        example: 10
+        type: integer
+      page:
+        example: 1
+        type: integer
+      total:
+        example: 100
+        type: integer
+    type: object
+  LVerity_pkg_model.PaginatedUsersResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/LVerity_pkg_model.User'
+        type: array
+      limit:
+        example: 10
+        type: integer
+      page:
+        example: 1
+        type: integer
+      total:
+        example: 100
+        type: integer
+    type: object
+  LVerity_pkg_model.UsageStats:
+    properties:
+      average_usage_time:
+        type: integer
+      daily_active_count:
+        type: integer
+      last_active_date:
+        type: string
+      peak_usage_time:
+        type: integer
+      total_usage_time:
+        type: integer
+      weekly_active_count:
+        type: integer
+    type: object
+  LVerity_pkg_model.User:
+    properties:
+      create_time:
+        type: string
+      id:
+        type: string
+      last_login:
+        type: string
+      mfa_enabled:
+        type: boolean
+      mfa_secret:
+        type: string
+      role_id:
+        description: 关联角色ID
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/LVerity_pkg_model.UserStatus'
+        description: 'true: 启用, false: 禁用'
+      update_time:
+        type: string
+      username:
+        type: string
+    type: object
+  LVerity_pkg_model.UserStatus:
+    enum:
+    - active
+    - inactive
+    - blocked
+    type: string
+    x-enum-comments:
+      UserStatusActive: 启用
+      UserStatusBlocked: 封禁
+      UserStatusInactive: 禁用
+    x-enum-varnames:
+    - UserStatusActive
+    - UserStatusInactive
+    - UserStatusBlocked
+  pkg_handler.AlertCountResponse:
+    properties:
+      count:
+        type: integer
+    type: object
+  pkg_handler.CreateAlertRequest:
+    properties:
+      deviceId:
+        type: string
+      level:
+        $ref: '#/definitions/LVerity_pkg_model.AlertLevel'
+      message:
+        type: string
+      metadata:
+        type: string
+      type:
+        type: string
+    required:
+    - deviceId
+    - level
+    - message
+    - type
+    type: object
+  pkg_handler.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  pkg_handler.SuccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  pkg_handler.UpdateAlertStatusRequest:
+    properties:
+      status:
+        $ref: '#/definitions/LVerity_pkg_model.AlertStatus'
+    required:
+    - status
+    type: object
+  pkg_handler.UpdateLocationRequest:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the API for LVerity, a device management and licensing system.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: LVerity API
+  version: "1.0"
+paths:
+  /api/v1/alerts:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中指定状态的所有告警
+      parameters:
+      - description: 告警状态
+        in: query
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/LVerity_pkg_model.Alert'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg_handler.ErrorResponse'
+      summary: 获取指定状态的告警列表
+      tags:
+      - 告警管理
+    post:
+      consumes:
+      - application/json
+      description: 为指定设备创建一个新的告警记录
+      parameters:
+      - description: 告警信息
+        in: body
+        name: alert
+        required: true
+        schema:
+          $ref: '#/definitions/pkg_handler.CreateAlertRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.Alert'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg_handler.ErrorResponse'
+      summary: 创建新的告警
+      tags:
+      - 告警管理
+  /api/v1/alerts/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据告警ID获取告警详细信息
+      parameters:
+      - description: 告警ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.Alert'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg_handler.ErrorResponse'
+      summary: 获取告警详情
+      tags:
+      - 告警管理
+  /api/v1/alerts/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: 更新指定告警的状态
+      parameters:
+      - description: 告警ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 新状态
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/pkg_handler.UpdateAlertStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg_handler.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg_handler.ErrorResponse'
+      summary: 更新告警状态
+      tags:
+      - 告警管理
+  /api/v1/alerts/count:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定设备和状态的告警数量
+      parameters:
+      - description: 设备ID
+        in: query
+        name: deviceId
+        type: string
+      - description: 告警状态
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg_handler.AlertCountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg_handler.ErrorResponse'
+      summary: 获取告警数量
+      tags:
+      - 告警管理
+  /api/v1/alerts/timerange:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定时间范围内的所有告警记录
+      parameters:
+      - description: 开始时间
+        in: query
+        name: startTime
+        required: true
+        type: string
+      - description: 结束时间
+        in: query
+        name: endTime
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/LVerity_pkg_model.Alert'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg_handler.ErrorResponse'
+      summary: 获取时间范围内的告警
+      tags:
+      - 告警管理
+  /api/v1/devices/{deviceId}/alerts:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定设备的所有告警记录
+      parameters:
+      - description: 设备ID
+        in: path
+        name: deviceId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/LVerity_pkg_model.Alert'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg_handler.ErrorResponse'
+      summary: 获取设备的告警列表
+      tags:
+      - 告警管理
+  /api/v1/devices/{deviceId}/location:
+    put:
+      consumes:
+      - application/json
+      description: 更新指定设备的地理位置信息
+      parameters:
+      - description: 设备ID
+        in: path
+        name: deviceId
+        required: true
+        type: string
+      - description: 位置信息
+        in: body
+        name: location
+        required: true
+        schema:
+          $ref: '#/definitions/pkg_handler.UpdateLocationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.DeviceLocationLog'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg_handler.ErrorResponse'
+      summary: 更新设备位置信息
+      tags:
+      - 地理位置
+  /api/v1/devices/nearby:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定坐标点附近的设备列表
+      parameters:
+      - description: 纬度
+        in: query
+        name: latitude
+        required: true
+        type: number
+      - description: 经度
+        in: query
+        name: longitude
+        required: true
+        type: number
+      - description: 半径(米)
+        in: query
+        name: radius
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/LVerity_pkg_model.Device'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg_handler.ErrorResponse'
+      summary: 获取附近的设备
+      tags:
+      - 地理位置
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/LVerity_pkg_model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful login
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.LoginResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+      summary: User login
+      tags:
+      - auth
+  /devices:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of devices.
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by device status (e.g., active, inactive)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of devices
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.PaginatedDevicesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List devices
+      tags:
+      - devices
+    post:
+      consumes:
+      - application/json
+      description: Adds a new device to the system.
+      parameters:
+      - description: Device information
+        in: body
+        name: device
+        required: true
+        schema:
+          $ref: '#/definitions/LVerity_pkg_model.CreateDeviceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Device created successfully" // Using model.Device as DeviceResponse
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.Device'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new device
+      tags:
+      - devices
+  /devices/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves details for a specific device by its ID.
+      parameters:
+      - description: Device ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Device details
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.Device'
+        "404":
+          description: Device not found
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get device details
+      tags:
+      - devices
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of users.
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.PaginatedUsersResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/LVerity_pkg_model.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List users
+      tags:
+      - users
+schemes:
+- http
+- https
+swagger: "2.0"

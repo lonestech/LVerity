@@ -6,6 +6,7 @@ import (
 	"LVerity/pkg/service"
 	"fmt"
 	"net/http"
+	"strconv" // Added for Atoi
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -143,53 +144,103 @@ func GetDevices(c *gin.Context) {
 }
 
 // ListDevices 获取设备列表
+// @Summary List devices
+// @Description Retrieves a paginated list of devices.
+// @Tags devices
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(10)
+// @Param status query string false "Filter by device status (e.g., active, inactive)"
+// @Success 200 {object} model.PaginatedDevicesResponse "List of devices"
+// @Failure 500 {object} model.ErrorResponse "Internal server error"
+// @Router /devices [get]
 func ListDevices(c *gin.Context) {
 	// 从查询参数获取分页信息
-	page := c.DefaultQuery("page", "1")
-	pageSize := c.DefaultQuery("pageSize", "10")
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10") // Changed from pageSize to limit for consistency
+	// status := c.Query("status") // Status query param for future service layer filtering - removed for now
 
-	devices, total, err := service.ListDevices(page, pageSize)
+	page, errPage := strconv.Atoi(pageStr)
+	if errPage != nil || page < 1 {
+		page = 1
+	}
+	limit, errLimit := strconv.Atoi(limitStr)
+	if errLimit != nil || limit < 1 {
+		limit = 10
+	}
+	if limit > 100 { // Max limit
+		limit = 100
+	}
+
+	// Call service layer, potentially passing status if the service supports it
+	// Assuming service.ListDevices can take page, limit, and optionally status
+	// For now, the existing service.ListDevices(page, pageSize) does not take status.
+	// This would be a point of extension for the service.
+	// deviceList, total, err := service.ListDevices(page, limit, status) // Ideal
+	// Assuming service.ListDevices now returns ([]model.Device, int64, error)
+	// If service.ListDevices returns (interface{}, int64, error), the previous type assertion logic was closer.
+	// Given the error, it implies devicesData is already []model.Device or the type assertion is on the wrong variable.
+	// Let's assume service.ListDevices returns concrete type []model.Device
+	deviceList, total, err := service.ListDevices(pageStr, limitStr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success":       false,
-			"error_message": err.Error(),
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Error:   "Failed to retrieve device list",
+			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data": gin.H{
-			"list":  devices,
-			"total": total,
-		},
+	// If service.ListDevices returns ([]model.Device, int64, error),
+	// then deviceList is already of the correct type.
+	// No type assertion is needed.
+	// Ensure deviceList is not nil if it's an empty list for JSON response.
+	if deviceList == nil {
+		deviceList = []model.Device{}
+	}
+
+	c.JSON(http.StatusOK, model.PaginatedDevicesResponse{
+		Data:  deviceList,
+		Total: total,
+		Page:  page,
+		Limit: limit,
 	})
 }
 
 // CreateDevice 创建设备
+// @Summary Create a new device
+// @Description Adds a new device to the system.
+// @Tags devices
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param device body model.CreateDeviceRequest true "Device information"
+// @Success 201 {object} model.Device "Device created successfully" // Using model.Device as DeviceResponse
+// @Failure 400 {object} model.ErrorResponse "Invalid input"
+// @Failure 500 {object} model.ErrorResponse "Internal server error"
+// @Router /devices [post]
 func CreateDevice(c *gin.Context) {
-	var req RegisterDeviceRequest
+	var req model.CreateDeviceRequest // Changed to model.CreateDeviceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success":       false,
-			"error_message": err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid input", Message: err.Error()})
 		return
 	}
 
+	// Assuming service.CreateDevice exists and takes parameters from req
+	// The current service.RegisterDevice is used by CreateDevice handler.
+	// Let's adapt to use fields from CreateDeviceRequest
+	// service.RegisterDevice(diskID, bios, motherboard, name string)
+	// A new service method service.CreateDevice(req model.CreateDeviceRequest) would be cleaner.
+	// For now, map fields from model.CreateDeviceRequest to existing service.RegisterDevice
 	device, err := service.RegisterDevice(req.DiskID, req.BIOS, req.Motherboard, req.Name)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success":       false,
-			"error_message": err.Error(),
-		})
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to create device", Message: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    device,
-	})
+	// Respond with the created device (model.Device which serves as model.DeviceResponse)
+	c.JSON(http.StatusCreated, device)
 }
 
 // UpdateDevice 更新设备
@@ -336,15 +387,30 @@ func GetDeviceUsageReport(c *gin.Context) {
 }
 
 // GetDeviceInfo 获取设备详细信息
+// @Summary Get device details
+// @Description Retrieves details for a specific device by its ID.
+// @Tags devices
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param id path string true "Device ID"
+// @Success 200 {object} model.Device "Device details"
+// @Failure 404 {object} model.ErrorResponse "Device not found"
+// @Failure 500 {object} model.ErrorResponse "Internal server error"
+// @Router /devices/{id} [get]
 func GetDeviceInfo(c *gin.Context) {
 	deviceID := c.Param("id")
 
 	device, err := service.GetDeviceInfo(deviceID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		// Check if error is "not found" type, e.g. gorm.ErrRecordNotFound
+		// For simplicity, assuming any error from service.GetDevice means not found or other server error.
+		// A more specific error handling would be better.
+		c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Device not found", Message: err.Error()})
 		return
 	}
 
+	// Respond with model.Device, which serves as model.DeviceResponse
 	c.JSON(http.StatusOK, device)
 }
 

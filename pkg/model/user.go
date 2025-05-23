@@ -66,3 +66,11 @@ func (u *User) BeforeUpdate(tx *gorm.DB) error {
 	u.UpdateTime = time.Now()
 	return nil
 }
+
+// PaginatedUsersResponse represents a paginated list of users.
+type PaginatedUsersResponse struct {
+	Data  []User `json:"data"`
+	Total int64  `json:"total" example:"100"`
+	Page  int    `json:"page" example:"1"`
+	Limit int    `json:"limit" example:"10"`
+}

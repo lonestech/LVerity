@@ -1,12 +1,16 @@
 package router
 
 import (
+	_ "LVerity/docs" // Import the generated docs package for side effects
 	"LVerity/pkg/handler"
 	"LVerity/pkg/middleware"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"     // swagger embed files
+	ginSwagger "github.com/swaggo/gin-swagger" // gin-swagger middleware
 )
 
 // 检查是否处于开发模式
@@ -24,6 +28,10 @@ func SetupRouter() *gin.Engine {
 	r.Static("/assets", "./web/dist/assets")
 	r.StaticFile("/", "./web/dist/index.html")
 	r.StaticFile("/favicon.ico", "./web/dist/favicon.ico")
+
+	// Swagger documentation endpoint
+	// URL for swagger UI is host/swagger/index.html
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// 处理前端路由
 	r.NoRoute(func(c *gin.Context) {

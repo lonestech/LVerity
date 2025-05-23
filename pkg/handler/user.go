@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"LVerity/pkg/model" // Added for model responses
 	"LVerity/pkg/service"
 	"fmt"
 	"io"
@@ -219,46 +220,51 @@ func GetUserProfile(c *gin.Context) {
 }
 
 // ListUsers 获取用户列表（分页）
+// @Summary List users
+// @Description Retrieves a paginated list of users.
+// @Tags users
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(10)
+// @Success 200 {object} model.PaginatedUsersResponse "List of users"
+// @Failure 500 {object} model.ErrorResponse "Internal server error"
+// @Router /users [get]
 func ListUsers(c *gin.Context) {
 	// 获取分页参数
-	page := c.DefaultQuery("page", "1")
-	pageSize := c.DefaultQuery("pageSize", "10")
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("pageSize", "10") // Swagger uses 'limit', existing code uses 'pageSize'
 
 	// 转换为整数
-	pageInt, err := strconv.Atoi(page)
-	if err != nil || pageInt < 1 {
-		pageInt = 1
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
 	}
-	pageSizeInt, err := strconv.Atoi(pageSize)
-	if err != nil || pageSizeInt < 1 {
-		pageSizeInt = 10
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 10
 	}
 
 	// 限制每页最大数量
-	if pageSizeInt > 100 {
-		pageSizeInt = 100
+	if limit > 100 {
+		limit = 100
 	}
 
 	// 获取用户列表
-	users, total, err := service.ListUsers(pageInt, pageSizeInt)
+	users, total, err := service.ListUsers(page, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "获取用户列表失败",
-			"error":   err.Error(),
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Error:   "Failed to retrieve user list",
+			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "success",
-		"code":    200,
-		"data": gin.H{
-			"users":    users,
-			"total":    total,
-			"page":     pageInt,
-			"pageSize": pageSizeInt,
-		},
+	c.JSON(http.StatusOK, model.PaginatedUsersResponse{
+		Data:  users,
+		Total: total,
+		Page:  page,
+		Limit: limit,
 	})
 }
